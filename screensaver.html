@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="assets/app-icon.png">
+  <title>Ruanftrix 屏保</title>
+  <style>
+    :root {
+      --accent: #ff7b00;
+      --accent-light: #ffa500;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 123, 0, 0.3);
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 123, 0, 0.6);
+    }
+
+    body {
+      overflow: hidden;
+      background-color: #000;
+      width: 100vw;
+      height: 100vh;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #screensaver-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .wallpaper {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+      opacity: 0;
+    }
+
+    .wallpaper.active {
+      opacity: 1;
+    }
+
+    .wallpaper.loading {
+      background: linear-gradient(135deg, #0a0a0a 0%, #141414 50%, #0a0a0a 100%);
+    }
+
+    #top-bar {
+      position: absolute;
+      top: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 24px;
+      z-index: 30;
+    }
+
+    .top-btn {
+      width: 48px;
+      height: 48px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      color: rgba(255, 255, 255, 0.8);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.25s ease;
+      pointer-events: auto;
+    }
+
+    .top-btn:hover {
+      background: rgba(255, 123, 0, 0.6);
+      color: white;
+      transform: scale(1.08);
+    }
+
+    .top-btn:active {
+      transform: scale(0.95);
+    }
+
+    .top-btn svg {
+      width: 22px;
+      height: 22px;
+    }
+
+    #clock-container {
+      position: absolute;
+      color: white;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.6s ease;
+      z-index: 10;
+    }
+
+    #clock-container.pos-bottom-left {
+      bottom: 60px;
+      left: 60px;
+      text-align: left;
+    }
+
+    #clock-container.pos-bottom-right {
+      bottom: 60px;
+      right: 60px;
+      text-align: right;
+    }
+
+    #clock-container.pos-bottom-center {
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    #clock-container.pos-top-left {
+      top: 80px;
+      left: 60px;
+      text-align: left;
+    }
+
+    #clock-container.pos-top-right {
+      top: 80px;
+      right: 60px;
+      text-align: right;
+    }
+
+    #clock-container.pos-top-center {
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+    }
+
+    #clock-container.visible {
+      opacity: 1;
+    }
+
+    #time {
+      font-size: 120px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      margin-bottom: 16px;
+      text-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
+      line-height: 1;
+    }
+
+    #date {
+      font-size: 36px;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.75);
+      letter-spacing: 2px;
+      text-shadow: 0 2px 15px rgba(0, 0, 0, 0.4);
+    }
+
+    #loading-indicator {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    #loading-indicator.visible {
+      opacity: 1;
+    }
+
+    .spinner {
+      width: 48px;
+      height: 48px;
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+      box-shadow: 0 0 20px rgba(255, 123, 0, 0.3);
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.5);
+      letter-spacing: 1px;
+    }
+
+    #progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      transition: width 0.1s linear;
+      opacity: 0.4;
+      z-index: 15;
+    }
+
+    .vignette {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.4) 100%);
+      z-index: 5;
+    }
+  </style>
+</head>
+<body>
+  <div id="screensaver-container">
+    <div id="wallpaper1" class="wallpaper loading active"></div>
+    <div id="wallpaper2" class="wallpaper loading"></div>
+    
+    <div class="vignette"></div>
+    
+    <div id="top-bar">
+      <button class="top-btn" id="btnClose" title="关闭屏保">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+      <button class="top-btn" id="btnSwitch" title="切换壁纸">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="17 1 21 5 17 9"></polyline>
+          <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+          <polyline points="7 23 3 19 7 15"></polyline>
+          <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+        </svg>
+      </button>
+    </div>
+    
+    <div id="clock-container">
+      <div id="time">00:00</div>
+      <div id="date">2026年1月1日 星期一</div>
+    </div>
+    
+    <div id="loading-indicator">
+      <div class="spinner"></div>
+      <div class="loading-text">正在加载壁纸</div>
+    </div>
+    
+    <div id="progress-bar" style="width: 0%"></div>
+  </div>
+
+  <script src="screensaver.js"></script>
+</body>
+</html>

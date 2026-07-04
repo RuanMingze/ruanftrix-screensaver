@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" type="image/png" href="assets/app-icon.png">
+  <title>Ruanftrix 屏保设置</title>
+  <style>
+    :root {
+      --bg-primary: #0a0a0a;
+      --bg-secondary: #141414;
+      --bg-tertiary: #1e1e1e;
+      --accent: #ff7b00;
+      --accent-light: #ffa500;
+      --accent-dark: #e67000;
+      --text-primary: #ffffff;
+      --text-secondary: #8a8a8a;
+      --text-muted: #5a5a5a;
+      --border-color: #2a2a2a;
+      --border-light: #3a3a3a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-secondary);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--accent);
+    }
+
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .titlebar {
+      height: 48px;
+      background-color: var(--bg-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 8px 0 16px;
+      -webkit-app-region: drag;
+      border-bottom: 1px solid var(--border-color);
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+    }
+
+    .titlebar-title {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .titlebar-title img {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+    }
+
+    .titlebar-buttons {
+      display: flex;
+      -webkit-app-region: no-drag;
+    }
+
+    .titlebar-btn {
+      width: 36px;
+      height: 32px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.15s ease;
+      border-radius: 4px;
+    }
+
+    .titlebar-btn:hover {
+      background-color: rgba(255, 255, 255, 0.08);
+      color: var(--text-primary);
+    }
+
+    .titlebar-btn.close:hover {
+      background-color: #e81123;
+      color: white;
+    }
+
+    .titlebar-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .container {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 72px 20px 24px;
+    }
+
+    .header {
+      text-align: center;
+      padding: 8px 0 28px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 28px;
+    }
+
+    .header .logo {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 16px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(255, 123, 0, 0.15);
+    }
+
+    .header .logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .header p {
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin-top: 6px;
+    }
+
+    .section {
+      background-color: var(--bg-secondary);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 20px;
+      border: 1px solid var(--border-color);
+      transition: border-color 0.2s ease;
+    }
+
+    .section:hover {
+      border-color: var(--border-light);
+    }
+
+    .section-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-primary);
+    }
+
+    .section-title .title-line {
+      width: 4px;
+      height: 18px;
+      background: linear-gradient(180deg, var(--accent), var(--accent-light));
+      border-radius: 2px;
+    }
+
+    .form-group {
+      margin-bottom: 22px;
+    }
+
+    .form-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .label {
+      display: block;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .label-secondary {
+      display: block;
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+
+    .input-control {
+      width: 100%;
+      padding: 13px 16px;
+      background-color: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: all 0.25s ease;
+      outline: none;
+    }
+
+    .input-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255, 123, 0, 0.1);
+    }
+
+    textarea.input-control {
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+      line-height: 1.5;
+    }
+
+    .select-control {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238a8a8a' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 14px center;
+      background-repeat: no-repeat;
+      background-size: 16px;
+      cursor: pointer;
+    }
+
+    .range-container {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .range-track {
+      flex: 1;
+      height: 6px;
+      background-color: var(--bg-tertiary);
+      border-radius: 3px;
+      position: relative;
+      overflow: visible;
+    }
+
+    .range-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      border-radius: 3px;
+      width: 50%;
+      transition: width 0.1s linear;
+      pointer-events: none;
+    }
+
+    .range-control {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    .range-thumb {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 20px;
+      height: 20px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      pointer-events: none;
+      transition: transform 0.15s ease;
+      z-index: 5;
+    }
+
+    .range-value {
+      min-width: 50px;
+      text-align: right;
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 600;
+      font-family: 'SF Mono', 'Monaco', monospace;
+    }
+
+    .custom-idle-display {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      background-color: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+    }
+
+    .custom-idle-text {
+      font-size: 14px;
+      color: var(--accent);
+      font-weight: 600;
+      font-family: 'SF Mono', 'Monaco', monospace;
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      cursor: pointer;
+      padding: 11px 14px;
+      margin: -11px -14px;
+      border-radius: 8px;
+      transition: background-color 0.15s ease;
+    }
+
+    .checkbox-container:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    .checkbox {
+      width: 22px;
+      height: 22px;
+      border: 2px solid var(--border-light);
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .checkbox.checked {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border-color: var(--accent);
+    }
+
+    .checkbox::after {
+      content: '';
+      width: 10px;
+      height: 6px;
+      border-left: 2.5px solid white;
+      border-bottom: 2.5px solid white;
+      transform: rotate(-45deg);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .checkbox.checked::after {
+      opacity: 1;
+    }
+
+    .checkbox-label {
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .toggle-group {
+      display: flex;
+      gap: 0;
+      background-color: var(--bg-tertiary);
+      border-radius: 10px;
+      padding: 4px;
+      border: 1px solid var(--border-color);
+    }
+
+    .toggle-option {
+      flex: 1;
+      padding: 11px 16px;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 7px;
+      transition: all 0.2s ease;
+    }
+
+    .toggle-option.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      box-shadow: 0 2px 8px rgba(255, 123, 0, 0.25);
+    }
+
+    .style-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .style-option {
+      padding: 18px 14px;
+      background-color: var(--bg-tertiary);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .style-option::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      transform: scaleX(0);
+      transition: transform 0.25s ease;
+    }
+
+    .style-option:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+
+    .style-option:hover::before {
+      transform: scaleX(1);
+    }
+
+    .style-option.selected {
+      background-color: rgba(255, 123, 0, 0.08);
+      border-color: var(--accent);
+    }
+
+    .style-option.selected::before {
+      transform: scaleX(1);
+    }
+
+    .style-icon-wrapper {
+      width: 42px;
+      height: 42px;
+      margin: 0 auto 10px;
+      background-color: var(--bg-secondary);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s ease;
+    }
+
+    .style-option.selected .style-icon-wrapper {
+      background-color: rgba(255, 123, 0, 0.2);
+    }
+
+    .style-icon {
+      width: 22px;
+      height: 22px;
+      opacity: 0.8;
+    }
+
+    .style-option.selected .style-icon {
+      opacity: 1;
+    }
+
+    .style-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .source-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .source-tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 14px 8px;
+      background-color: var(--bg-tertiary);
+      border: 2px solid var(--border-color);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+    }
+
+    .source-tab svg {
+      width: 20px;
+      height: 20px;
+      color: var(--text-secondary);
+      transition: color 0.2s ease;
+    }
+
+    .source-tab span {
+      font-size: 12px;
+      color: var(--text-secondary);
+      transition: color 0.2s ease;
+    }
+
+    .source-tab:hover {
+      border-color: var(--accent);
+    }
+
+    .source-tab:hover svg,
+    .source-tab:hover span {
+      color: var(--text-primary);
+    }
+
+    .source-tab.active {
+      background: rgba(255, 123, 0, 0.1);
+      border-color: var(--accent);
+    }
+
+    .source-tab.active svg,
+    .source-tab.active span {
+      color: var(--accent-light);
+    }
+
+    .source-panel {
+      display: none;
+      padding-top: 4px;
+    }
+
+    .file-picker {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .file-picker-info {
+      flex: 1;
+      padding: 11px 14px;
+      background-color: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .btn-picker {
+      flex-shrink: 0;
+      padding: 11px 18px;
+      font-size: 13px;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 28px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      box-shadow: 0 4px 16px rgba(255, 123, 0, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(255, 123, 0, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--border-color);
+      border-color: var(--border-light);
+    }
+
+    .btn-preview {
+      background-color: var(--bg-tertiary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .btn-preview.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+      border-color: var(--accent);
+      box-shadow: 0 2px 12px rgba(255, 123, 0, 0.25);
+    }
+
+    .btn-preview:hover {
+      border-color: var(--accent);
+    }
+
+    .save-indicator-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 999;
+      pointer-events: none;
+    }
+
+    .save-indicator {
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 20px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .save-indicator.saving {
+      opacity: 1;
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .save-indicator.saved {
+      opacity: 1;
+      color: #00c853;
+      border-color: #00c853;
+    }
+
+    .save-indicator.error {
+      opacity: 1;
+      color: #e81123;
+      border-color: #e81123;
+    }
+
+    .preview-toggle-section {
+      margin-top: 28px;
+      display: flex;
+      gap: 12px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .footer p {
+      font-size: 12px;
+      color: var(--text-muted);
+      letter-spacing: 0.3px;
+    }
+
+    .custom-input-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 10px;
+      padding: 7px 14px;
+      background-color: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .custom-input-btn:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .custom-input-btn svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    .number-input-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .number-input-group .input-control {
+      flex: 1;
+      -moz-appearance: textfield;
+    }
+
+    .number-input-group .input-control::-webkit-inner-spin-button,
+    .number-input-group .input-control::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .input-suffix {
+      font-size: 13px;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .disabled-group {
+      opacity: 0.4;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .modal-overlay.visible {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 28px;
+      width: 360px;
+      max-width: 90vw;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+      transform: scale(0.9);
+      transition: transform 0.2s ease;
+    }
+
+    .modal-overlay.visible .modal {
+      transform: scale(1);
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+
+    .modal-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+
+    .modal-input-wrapper {
+      position: relative;
+      margin-bottom: 12px;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 13px 60px 13px 16px;
+      background-color: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 15px;
+      outline: none;
+      transition: all 0.2s ease;
+      -moz-appearance: textfield;
+    }
+
+    .modal-input::-webkit-inner-spin-button,
+    .modal-input::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .modal-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(255, 123, 0, 0.1);
+    }
+
+    .modal-input-suffix {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px;
+      color: var(--text-secondary);
+      pointer-events: none;
+    }
+
+    .modal-warning {
+      display: none;
+      padding: 10px 14px;
+      background: rgba(255, 123, 0, 0.1);
+      border: 1px solid rgba(255, 123, 0, 0.3);
+      border-radius: 8px;
+      color: var(--accent-light);
+      font-size: 12px;
+      margin-bottom: 16px;
+      line-height: 1.5;
+    }
+
+    .modal-warning.visible {
+      display: block;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .modal-btn {
+      flex: 1;
+      padding: 11px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .modal-btn-cancel {
+      background-color: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .modal-btn-cancel:hover {
+      background-color: var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .modal-btn-confirm {
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: white;
+    }
+
+    .modal-btn-confirm:hover {
+      box-shadow: 0 4px 12px rgba(255, 123, 0, 0.3);
+    }
+
+    .modal-btn-confirm:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="titlebar">
+    <div class="titlebar-title">
+      <img src="assets/app-icon.png" alt="icon">
+      <span>Ruanftrix 屏保设置</span>
+    </div>
+    <div class="titlebar-buttons">
+      <button class="titlebar-btn" id="btnMinimize" title="最小化">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+      <button class="titlebar-btn close" id="btnTitlebarClose" title="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <div class="logo">
+        <img src="assets/app-icon.png" alt="logo">
+      </div>
+      <h1>Ruanftrix 屏保</h1>
+      <p>设置您的个性化屏保体验</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="title-line"></span>
+        <span>屏保触发</span>
+      </div>
+      
+      <div class="form-group">
+        <label class="label">空闲时间</label>
+        <div class="range-container" id="idleRangeContainer">
+          <div class="range-track">
+            <div class="range-fill"></div>
+            <input type="range" id="idleMinutes" class="range-control" min="1" max="30" value="5">
+            <div class="range-thumb"></div>
+          </div>
+          <span class="range-value" id="idleMinutesValue">5</span>
+        </div>
+        <div class="custom-idle-display" id="customIdleDisplay" style="display: none;">
+          <span class="custom-idle-text" id="customIdleText">5 分钟</span>
+        </div>
+        <button class="custom-input-btn" id="btnCustomIdle" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+          <span>随意设置</span>
+        </button>
+        <span class="label-secondary">电脑空闲多久后显示屏保（分钟，默认 1-30，可自定义）</span>
+      </div>
+
+      <div class="form-group">
+        <label class="label">退出方式</label>
+        <div class="toggle-group">
+          <div class="toggle-option active" data-exit="manual">仅手动关闭</div>
+          <div class="toggle-option" data-exit="activity">任意动作退出</div>
+        </div>
+        <span class="label-secondary">仅手动关闭：只能点击右上角关闭按钮退出；任意动作退出：移动鼠标或按键即退出</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="title-line"></span>
+        <span>壁纸来源</span>
+      </div>
+      
+      <div class="source-tabs">
+        <div class="source-tab active" data-source="online">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span>网络壁纸</span>
+        </div>
+        <div class="source-tab" data-source="url">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          <span>自定义URL</span>
+        </div>
+        <div class="source-tab" data-source="multiUrl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>多张URL</span>
+        </div>
+        <div class="source-tab" data-source="local">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="17 8 12 3 7 8"></polyline>
+            <line x1="12" y1="3" x2="12" y2="15"></line>
+          </svg>
+          <span>本地单图</span>
+        </div>
+        <div class="source-tab" data-source="folder">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+          </svg>
+          <span>本地文件夹</span>
+        </div>
+      </div>
+
+      <div class="source-panel" id="panel-online" style="display: block;">
+        <div class="style-grid">
+          <div class="style-option selected" data-style="random">
+            <div class="style-icon-wrapper">
+              <svg class="style-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 2v4"></path>
+                <path d="M12 18v4"></path>
+                <path d="m4.93 4.93 2.83 2.83"></path>
+                <path d="m16.24 16.24 2.83 2.83"></path>
+                <path d="M2 12h4"></path>
+                <path d="M18 12h4"></path>
+                <path d="m6.34 17.66 2.83-2.83"></path>
+                <path d="m15.66 8.34 2.83-2.83"></path>
+              </svg>
+            </div>
+            <div class="style-name">随机</div>
+          </div>
+          <div class="style-option" data-style="landscape">
+            <div class="style-icon-wrapper">
+              <svg class="style-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 21v-8a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v8"></path>
+                <path d="M8 21h8"></path>
+                <path d="M10 10v6"></path>
+                <path d="M14 10v6"></path>
+                <path d="M12 2v6"></path>
+              </svg>
+            </div>
+            <div class="style-name">风景</div>
+          </div>
+          <div class="style-option" data-style="cartoon">
+            <div class="style-icon-wrapper">
+              <svg class="style-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"></path>
+                <line x1="9" y1="9" x2="9.01" y2="9"></line>
+                <line x1="15" y1="9" x2="15.01" y2="9"></line>
+              </svg>
+            </div>
+            <div class="style-name">动漫</div>
+          </div>
+          <div class="style-option" data-style="game">
+            <div class="style-icon-wrapper">
+              <svg class="style-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="6" y1="11" x2="10" y2="11"></line>
+                <line x1="8" y1="9" x2="8" y2="13"></line>
+                <line x1="15" y1="12" x2="15.01" y2="12"></line>
+                <line x1="18" y1="10" x2="18.01" y2="10"></line>
+                <path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258C21.208 6.5 20.532 5 17.32 5z"></path>
+              </svg>
+            </div>
+            <div class="style-name">游戏</div>
+          </div>
+          <div class="style-option" data-style="cool">
+            <div class="style-icon-wrapper">
+              <svg class="style-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+            </div>
+            <div class="style-name">炫酷</div>
+          </div>
+          <div class="style-option" data-style="4k">
+            <div class="style-icon-wrapper">
+              <svg class="style-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                <path d="M7 7h4v4H7z"></path>
+                <path d="M13 7h4v4h-4z"></path>
+                <path d="M7 13h4v4H7z"></path>
+                <path d="M13 13h4v4h-4z"></path>
+              </svg>
+            </div>
+            <div class="style-name">4K高清</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="source-panel" id="panel-url">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="label">壁纸URL</label>
+          <input type="text" id="customUrlInput" class="input-control" placeholder="输入图片URL地址，例如 https://example.com/wallpaper.jpg">
+          <span class="label-secondary">输入固定的图片URL作为壁纸（不自动切换）</span>
+        </div>
+      </div>
+
+      <div class="source-panel" id="panel-multiUrl">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="label">多张壁纸URL</label>
+          <textarea id="multiUrlInput" class="input-control" rows="4" placeholder="https://example.com/1.png, https://example.org/photo/1.png"></textarea>
+          <span class="label-secondary">输入多个图片URL，用英文逗号 , 分割，将自动轮播</span>
+        </div>
+      </div>
+
+      <div class="source-panel" id="panel-local">
+        <div class="file-picker">
+          <div class="file-picker-info" id="localFileInfo">未选择文件</div>
+          <button class="btn btn-secondary btn-picker" id="btnSelectLocalFile" type="button">选择图片</button>
+        </div>
+        <span class="label-secondary">选择一张本地图片作为固定壁纸（不自动切换）</span>
+      </div>
+
+      <div class="source-panel" id="panel-folder">
+        <div class="file-picker">
+          <div class="file-picker-info" id="localFolderInfo">未选择文件夹</div>
+          <button class="btn btn-secondary btn-picker" id="btnSelectLocalFolder" type="button">选择文件夹</button>
+        </div>
+        <span class="label-secondary">选择一个包含多张图片的文件夹，将自动轮播其中的图片</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">
+        <span class="title-line"></span>
+        <span>显示设置</span>
+      </div>
+      
+      <div class="checkbox-container" id="autoSwitchContainer">
+        <div class="checkbox checked" id="autoSwitch"></div>
+        <span class="checkbox-label">自动切换壁纸</span>
+      </div>
+
+      <div class="form-group" id="imageIntervalGroup" style="margin-top: 16px;">
+        <label class="label">切换间隔</label>
+        <div class="number-input-group">
+          <input type="number" id="imageInterval" class="input-control" min="5" max="600" value="30" step="5">
+          <span class="input-suffix">秒</span>
+        </div>
+        <span class="label-secondary">壁纸自动切换的时间间隔（5-600 秒）</span>
+      </div>
+
+      <div class="checkbox-container" id="showClockContainer">
+        <div class="checkbox" id="showClock"></div>
+        <span class="checkbox-label">显示时钟</span>
+      </div>
+
+      <div class="form-group" id="clockPositionGroup" style="margin-top: 16px;">
+        <label class="label">时钟位置</label>
+        <select id="clockPosition" class="input-control select-control">
+          <option value="bottom-left">左下角</option>
+          <option value="bottom-right">右下角</option>
+          <option value="bottom-center">底部居中</option>
+          <option value="top-left">左上角</option>
+          <option value="top-right">右上角</option>
+          <option value="top-center">顶部居中</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="label">时钟字体</label>
+        <select id="clockFont" class="input-control select-control">
+          <option value="Comic Sans MS">Comic Sans MS</option>
+          <option value="Segoe UI">Segoe UI</option>
+          <option value="Arial">Arial</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Courier New">Courier New</option>
+          <option value="Impact">Impact</option>
+          <option value="Microsoft YaHei">Microsoft YaHei</option>
+          <option value="Verdana">Verdana</option>
+        </select>
+      </div>
+
+      <div class="checkbox-container" id="showSecondsContainer">
+        <div class="checkbox" id="showSeconds"></div>
+        <span class="checkbox-label">显示秒数</span>
+      </div>
+
+      <div class="checkbox-container" id="showEffectsContainer">
+        <div class="checkbox checked" id="showEffects"></div>
+        <span class="checkbox-label">启用过渡效果</span>
+      </div>
+    </div>
+
+    <div class="preview-toggle-section">
+      <button class="btn btn-preview" id="btnTogglePreview">开启实时预览窗口</button>
+    </div>
+
+    <div class="button-group">
+      <button class="btn btn-secondary" id="btnReset">重置默认</button>
+      <button class="btn btn-secondary" style="flex: none; padding: 15px 32px;" id="btnPreview">预览屏保</button>
+    </div>
+
+    <div class="save-indicator-container">
+      <span class="save-indicator" id="saveIndicator"></span>
+    </div>
+
+    <div class="modal-overlay" id="customIdleModal">
+      <div class="modal">
+        <div class="modal-title">自定义空闲时间</div>
+        <div class="modal-desc">输入屏保触发的空闲时间（分钟），支持小数。推荐范围 1-30 分钟，过短或过长可能会影响使用。</div>
+        <div class="modal-input-wrapper">
+          <input type="number" id="customIdleInput" class="modal-input" min="0.1" step="0.1" value="5">
+          <span class="modal-input-suffix">分钟</span>
+        </div>
+        <div class="modal-warning" id="customIdleWarning"></div>
+        <div class="modal-buttons">
+          <button class="modal-btn modal-btn-cancel" id="btnCustomIdleCancel" type="button">取消</button>
+          <button class="modal-btn modal-btn-confirm" id="btnCustomIdleConfirm" type="button">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Ruanftrix Screensaver | Designed by Ruan Mingze</p>
+    </div>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

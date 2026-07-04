@@ -1,0 +1,65 @@
+{
+  "name": "ruanftrix-screensaver",
+  "version": "1.0.0",
+  "description": "Ruanftrix Screensaver - A beautiful wallpaper screensaver",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["screensaver", "electron", "wallpaper"],
+  "author": "Ruan Mingze <xmt20160124@outlook.com>",
+  "license": "MIT",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.1.2",
+      "onFail": "download"
+    }
+  },
+  "build": {
+    "appId": "cn.ruanftrix.screensaver",
+    "productName": "Ruanftrix 屏保",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "settings.html",
+      "settings.js",
+      "screensaver.html",
+      "screensaver.js",
+      "preview.html",
+      "preview.js",
+      "assets/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "icon": "assets/app-icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Ruanftrix 屏保"
+    }
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "electron": "^43.0.0",
+    "electron-builder": "^25.1.8"
+  }
+}
