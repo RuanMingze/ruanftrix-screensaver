@@ -2,8 +2,11 @@ const { app, BrowserWindow, ipcMain, globalShortcut, powerSaveBlocker, screen, T
 const path = require('path');
 const fs = require('fs');
 
-const isDev = process.argv.includes('--dev');
-const isDebug = isDev || process.argv.includes('--debug');
+const isDev = process.argv.includes('--dev') || process.env.RUANFTRIX_DEV === '1';
+const isDebug = isDev || process.argv.includes('--debug') || process.env.RUANFTRIX_DEBUG === '1';
+
+console.log('[启动] 命令行参数:', process.argv.join(' '));
+console.log(`[启动] Ruanftrix 屏保已启动 | 开发模式: ${isDev ? '开启' : '关闭'} | 调试模式: ${isDebug ? '开启' : '关闭'}`);
 
 if (process.platform === 'win32') {
   app.commandLine.appendSwitch('high-dpi-support', 'true');
@@ -342,8 +345,6 @@ app.whenReady().then(() => {
   createTray();
   createSettingsWindow();
   startIdleTimer();
-
-  console.log(`[启动] Ruanftrix 屏保已启动 | 开发模式: ${isDev ? '开启' : '关闭'}`);
 
   globalShortcut.register('Escape', () => {
     if (screensaverWindow) {

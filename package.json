@@ -5,8 +5,8 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder",
-    "build:win": "electron-builder --win",
+    "build": "electron-builder --publish never",
+    "build:win": "electron-builder --win --publish never",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": ["screensaver", "electron", "wallpaper"],
@@ -21,7 +21,7 @@
   },
   "build": {
     "appId": "cn.ruanftrix.screensaver",
-    "productName": "Ruanftrix 屏保",
+    "productName": "Ruanftrix-Screensaver",
     "directories": {
       "output": "release"
     },
@@ -50,11 +50,15 @@
       "icon": "assets/app-icon.ico"
     },
     "nsis": {
+      "artifactName": "${productName}-Setup-${version}-${arch}.${ext}",
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Ruanftrix 屏保"
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}-${arch}.${ext}"
     }
   },
   "dependencies": {},
