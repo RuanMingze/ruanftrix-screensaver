@@ -3,11 +3,17 @@ const { ipcRenderer } = electron;
 
 const styleCategories = {
   random: '',
-  landscape: 'landscape',
-  cartoon: 'cartoon',
+  landscape: 'nature',
+  cartoon: 'anime',
   game: 'game',
-  cool: 'cool',
-  '4k': '4k'
+  animal: 'animal',
+  city: 'city',
+  cool: 'abstract',
+  space: 'space',
+  car: 'car',
+  girl: 'girl',
+  sport: 'sport',
+  '4k': ''
 };
 
 let settings = {};
@@ -52,9 +58,13 @@ function loadSettings() {
 
 function getOnlineWallpaperUrl() {
   const category = styleCategories[settings.imageStyle] || '';
-  let url = 'https://api.mmp.cc/api/pcwallpaper?type=jpg';
+  let url = 'https://wp.upx8.com/api.php';
   if (category) {
-    url += `&category=${category}`;
+    url += `?category=${category}`;
+  } else if (settings.imageStyle === '4k') {
+    url += '?resolution=3840x2160';
+  } else {
+    url += '?resolution=1920x1080';
   }
   url += `&t=${Date.now()}`;
   return url;
