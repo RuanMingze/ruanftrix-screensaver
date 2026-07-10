@@ -342,6 +342,7 @@ const CHANGELOG_FALLBACK = [
       '【调试】新增 --win/--macos/--linux 命令行参数',
       '【系统支持】1.0.8 已实现 Windows / macOS / Linux 三平台同步发布（NSIS+便携 / DMG x64+arm64 / AppImage+DEB）',
       '【macOS Gatekeeper】未配置 Apple 签名证书（年费 99 USD），首次打开需在「系统设置 → 隐私与安全性」点击「仍要打开」，或执行 xattr -dr com.apple.quarantine 命令',
+      '【🛡️ 安全声明】100% 开源，无任何恶意行为：不收集隐私、不上传数据、无后门/广告/挖矿，源代码公开可审计（GitHub）',
       '【求助】开发者无 MacBook，macOS 菜单栏需要 Mac 用户协助测试',
       '【反馈】用户反馈了娱乐模式一键开关、滚动条上边距、Poftorix 边缘拖动诡异等多项改进'
     ]
