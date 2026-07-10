@@ -29,16 +29,29 @@
 
 - 新增 `--win` / `--macos` / `--linux` 命令行参数，用于在当前系统下模拟其他平台标题栏样式
 
+### 系统支持
+
+- 1.0.8 已实现 **Windows / macOS / Linux 三平台同步发布**
+- Windows：NSIS 安装包 + 便携版
+- macOS：DMG 镜像（支持 Intel x64 + Apple Silicon arm64）
+- Linux：AppImage（通用）+ DEB（Debian/Ubuntu）
+
+### macOS Gatekeeper 说明
+
+- 由于未配置 Apple Developer 签名证书（开发者账号年费 99 USD），**macOS 安装包未经过 Apple 公证**
+- **首次打开时** macOS 会弹出"无法验证开发者"的警告
+- **解决方法**：
+  1. 在「系统设置 → 隐私与安全性」中向下滚动到底部
+  2. 找到"仍要打开"按钮并点击
+  3. 后续打开将不再提示
+- 或在终端执行：`xattr -dr com.apple.quarantine /Applications/Ruanftrix.app`
+- 不会影响软件功能，仅为 macOS 安全机制
+
 ### 协助测试
 
-- 由于开发者没有 MacBook 设备，**macOS 平台的系统菜单栏无法完整测试**，欢迎 Mac 用户下载源码并编译后在「关于 / 编辑 / 窗口」菜单中验证功能是否正常
+- 由于开发者没有 MacBook 设备，**macOS 平台的系统菜单栏无法完整测试**，欢迎 Mac 用户下载后在「关于 / 编辑 / 窗口」菜单中验证功能是否正常
 - 测试方法：设置页面底部"更新日志"按钮 → 查看 macOS 红绿灯和系统菜单栏效果
-
-### 系统支持说明
-
-- **由于技术原因，1.0.8 暂时只能提供 Windows 安装包**（NSIS 安装包 + 便携版）
-- macOS / Linux 平台的代码已就绪（跨平台标题栏、macOS 系统菜单栏等），但**由于打包/签名工具链和开发设备的限制**，暂无法直接发布对应平台的安装包
-- 后续版本会逐步补齐 macOS 和 Linux 的安装包，敬请期待
+- Linux 用户如发现问题（如 AppImage 无法启动、托盘图标异常等），欢迎提交 Issue
 
 ---
 
