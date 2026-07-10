@@ -1,6 +1,16 @@
 const electron = window.require ? window.require('electron') : require('electron');
 const { ipcRenderer } = electron;
 
+// 用户原配置失败时的回退壁纸 URL 池（不会覆盖用户设置）
+// 加载失败时按顺序尝试，加载成功即停
+const FALLBACK_WALLPAPER_URLS = [
+  'https://luckycola.com.cn/public/imgs/luckycola_Imghub_forever_KXUAEbuJ17831741447088712.png',
+  'https://luckycola.com.cn/public/imgs/luckycola_Imghub_forever_XDx1So5a17831741555375465.png',
+  'https://luckycola.com.cn/public/imgs/luckycola_Imghub_forever_5Z1Q1XpG17752164264304110.jpg',
+  'https://luckycola.com.cn/public/imgs/luckycola_Imghub_forever_cjIr5FKD17701864981356073.png'
+];
+let fallbackIndex = 0;
+
 const styleCategories = {
   random: '',
   landscape: 'nature',
@@ -251,11 +261,12 @@ function updateWallpaper() {
 
   preloadImage(url, (error, src) => {
     if (error) {
-      console.error('获取壁纸失败:', error);
-      loadingIndicator.innerHTML = '<div class="spinner"></div><div class="loading-text">加载失败</div>';
-      setTimeout(() => {
-        loadingIndicator.classList.remove('visible');
-      }, 2000);
+      console.error('获取壁纸失败:', error, '→ 尝试回退到默认壁纸');
+      loadingIndicator.classList.remove('visible');
+      // 弹出左下角提示（不覆盖用户设置）
+      showToast('壁纸加载失败，使用默认壁纸');
+      // 改用回退 URL 池
+      tryFallbackWallpaper();
       return;
     }
 
@@ -280,6 +291,56 @@ function updateWallpaper() {
       }, 1000);
     }, 100);
   });
+}
+
+function tryFallbackWallpaper() {
+  const fallbackUrl = FALLBACK_WALLPAPER_URLS[fallbackIndex % FALLBACK_WALLPAPER_URLS.length];
+  fallbackIndex++;
+  preloadImage(fallbackUrl, (err, src) => {
+    if (err) {
+      console.error('回退壁纸加载失败:', err);
+      // 继续尝试下一个
+      if (fallbackIndex < FALLBACK_WALLPAPER_URLS.length * 2) {
+        tryFallbackWallpaper();
+      } else {
+        showToast('默认壁纸也加载失败，请检查网络');
+      }
+      return;
+    }
+    // 成功加载
+    const nextWallpaper = currentWallpaper === 1 ? 2 : 1;
+    const currentEl = document.getElementById(`wallpaper${currentWallpaper}`);
+    const nextEl = document.getElementById(`wallpaper${nextWallpaper}`);
+    if (!currentEl || !nextEl) return;
+    nextEl.style.backgroundImage = `url(${src})`;
+    nextEl.classList.remove('loading');
+    setTimeout(() => {
+      currentEl.classList.remove('active');
+      nextEl.classList.add('active');
+      currentWallpaper = nextWallpaper;
+      setTimeout(() => {
+        currentEl.style.backgroundImage = '';
+        currentEl.classList.add('loading');
+      }, 1000);
+    }, 100);
+    // 恢复自动轮播（如果用户原本开启了）
+    if (settings.autoSwitchWallpaper && !isFixedSource()) {
+      startImageRotation();
+    }
+  });
+}
+
+let toastTimer = null;
+function showToast(text) {
+  const toast = document.getElementById('toast-notification');
+  if (!toast) return;
+  const textEl = toast.querySelector('.toast-text');
+  if (textEl) textEl.textContent = text;
+  toast.classList.add('visible');
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('visible');
+  }, 5000);
 }
 
 function switchWallpaper() {

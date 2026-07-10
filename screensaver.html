@@ -230,6 +230,47 @@
       z-index: 15;
     }
 
+    #toast-notification {
+      position: absolute;
+      bottom: 40px;
+      left: 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 18px;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 123, 0, 0.4);
+      border-radius: 8px;
+      color: white;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      pointer-events: none;
+      z-index: 25;
+      max-width: 480px;
+    }
+
+    #toast-notification.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #toast-notification .toast-icon {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      color: var(--accent);
+    }
+
+    #toast-notification .toast-text {
+      flex: 1;
+    }
+
     .vignette {
       position: absolute;
       top: 0;
@@ -293,6 +334,15 @@
     <div id="loading-indicator">
       <div class="spinner"></div>
       <div class="loading-text">正在加载壁纸</div>
+    </div>
+
+    <div id="toast-notification">
+      <svg class="toast-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span class="toast-text"></span>
     </div>
     
     <div id="progress-bar" style="width: 0%"></div>
