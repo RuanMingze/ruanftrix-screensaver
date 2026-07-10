@@ -29,6 +29,53 @@ jobs:
         with:
           node-version: 25
 
+      - name: 清空 v1.0.8 现有的二进制 Release 文件（保留源代码 zip/tar.gz）
+        if: matrix.os == 'windows-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          Write-Host "获取 v1.0.8 当前所有 Release 文件..."
+          $assets = gh release view v1.0.8 --json assets --jq '.assets[] | "\(.name)|\(.id)"'
+          if (-not $assets) {
+            Write-Host "v1.0.8 没有任何 asset，无需清空"
+            exit 0
+          }
+          Write-Host "当前 v1.0.8 的文件列表："
+          $assets | ForEach-Object { Write-Host "  $_" }
+          Write-Host ""
+          Write-Host "删除非源代码的二进制文件（保留 .zip / .tar.gz 源代码包）..."
+          $toDelete = @()
+          foreach ($line in $assets) {
+            $parts = $line -split '\|', 2
+            $name = $parts[0]
+            $id = $parts[1]
+            $ext = [System.IO.Path]::GetExtension($name).ToLower()
+            if ($ext -eq '.zip' -or $ext -eq '.gz' -or $ext -eq '.bz2' -or $ext -eq '.xz') {
+              $baseName = [System.IO.Path]::GetFileNameWithoutExtension($name)
+              $baseExt = [System.IO.Path]::GetExtension($baseName).ToLower()
+              if ($baseExt -eq '.tar' -or $baseName -match '^source') {
+                Write-Host "  保留源代码包: $name"
+                continue
+              }
+            }
+            $toDelete += $name
+          }
+          if ($toDelete.Count -eq 0) {
+            Write-Host "没有需要删除的二进制文件"
+            exit 0
+          }
+          Write-Host ""
+          Write-Host "将删除以下文件："
+          $toDelete | ForEach-Object { Write-Host "  $_" }
+          foreach ($name in $toDelete) {
+            Write-Host "  删除: $name"
+            gh release delete-asset v1.0.8 $name --yes 2>&1
+          }
+          Write-Host ""
+          Write-Host "删除完成，v1.0.8 当前文件列表："
+          gh release view v1.0.8 --json assets --jq '.assets[] | .name'
+
       - name: 安装依赖 (Windows)
         if: matrix.os == 'windows-latest'
         shell: pwsh
@@ -110,7 +157,6 @@ jobs:
           path: |
             release/*.dmg
             release/*.zip
-            release/*.yml
 
       - name: 上传 Linux 构建产物
         if: matrix.os == 'ubuntu-latest'
@@ -122,9 +168,31 @@ jobs:
             release/*.deb
             release/*.snap
             release/*.zip
-            release/*.yml
 
       # ============== 自动追加到 v1.0.8 Release ==============
+      - name: 追加 Windows 文件到 v1.0.8 Release
+        if: matrix.os == 'windows-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+        run: |
+          Write-Host "查找 release 目录中的 Windows 文件..."
+          Get-ChildItem -Path release -Include *.exe,*.blockmap -File | ForEach-Object { Write-Host "  $($_.Name)  ($($_.Length) bytes)" }
+          $files = @(Get-ChildItem -Path release -Include *.exe,*.blockmap -File)
+          if ($files.Count -eq 0) {
+            Write-Host "未找到 Windows 文件，跳过上传"
+            exit 0
+          }
+          Write-Host ""
+          Write-Host "将上传以下文件到 v1.0.8 Release："
+          $files | ForEach-Object { Write-Host "  $($_.FullName)" }
+          Write-Host ""
+          $paths = $files | ForEach-Object { $_.FullName }
+          gh release upload v1.0.8 @paths --clobber 2>&1
+          Write-Host ""
+          Write-Host "上传完成，v1.0.8 当前文件列表："
+          gh release view v1.0.8 --json assets --jq '.assets[] | "\(.name)  (\(.size) bytes)"'
+
       - name: 追加 macOS 文件到 v1.0.8 Release
         if: matrix.os == 'macos-latest'
         env:
@@ -134,7 +202,7 @@ jobs:
           ls -la release/
           echo ""
           shopt -s nullglob
-          files=(release/*.dmg release/*.zip release/*.yml)
+          files=(release/*.dmg release/*.zip)
           if [ ${#files[@]} -eq 0 ]; then
             echo "未找到 macOS 文件，跳过上传"
             exit 0
@@ -146,7 +214,7 @@ jobs:
             gh release upload v1.0.8 "${files[@]}" 2>&1
           echo ""
           echo "上传完成，查看 v1.0.8 Release 当前文件列表："
-          gh release view v1.0.8 --json assets --jq '.assets[] | {name: .name, size: .size}'
+          gh release view v1.0.8 --json assets --jq '.assets[] | "\(.name)  (\(.size) bytes)"'
 
       - name: 追加 Linux 文件到 v1.0.8 Release
         if: matrix.os == 'ubuntu-latest'
@@ -157,7 +225,7 @@ jobs:
           ls -la release/
           echo ""
           shopt -s nullglob
-          files=(release/*.AppImage release/*.deb release/*.snap release/*.zip release/*.yml)
+          files=(release/*.AppImage release/*.deb release/*.snap release/*.zip)
           if [ ${#files[@]} -eq 0 ]; then
             echo "未找到 Linux 文件，跳过上传"
             exit 0
@@ -169,4 +237,4 @@ jobs:
             gh release upload v1.0.8 "${files[@]}" 2>&1
           echo ""
           echo "上传完成，查看 v1.0.8 Release 当前文件列表："
-          gh release view v1.0.8 --json assets --jq '.assets[] | {name: .name, size: .size}'
+          gh release view v1.0.8 --json assets --jq '.assets[] | "\(.name)  (\(.size) bytes)"'
