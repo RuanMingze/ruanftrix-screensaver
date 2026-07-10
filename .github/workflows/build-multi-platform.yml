@@ -1,0 +1,80 @@
+name: 构建多平台安装包
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: 构建 ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      - name: 安装 pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - name: 设置 Node.js 25
+        uses: actions/setup-node@v4
+        with:
+          node-version: 25
+
+      - name: 安装依赖 (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: pnpm install
+
+      - name: 安装依赖 (macOS / Linux)
+        if: matrix.os != 'windows-latest'
+        run: pnpm install
+
+      - name: 构建 Windows
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: pnpm run build:win
+
+      - name: 构建 macOS
+        if: matrix.os == 'macos-latest'
+        run: pnpm run build:mac
+
+      - name: 构建 Linux
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm run build:linux
+
+      - name: 上传 Windows 构建产物
+        if: matrix.os == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruanftrix-windows-x64
+          path: |
+            release/*.exe
+            release/*.blockmap
+
+      - name: 上传 macOS 构建产物
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruanftrix-macos
+          path: |
+            release/*.dmg
+            release/*.zip
+            release/*.yml
+
+      - name: 上传 Linux 构建产物
+        if: matrix.os == 'ubuntu-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ruanftrix-linux
+          path: |
+            release/*.AppImage
+            release/*.deb
+            release/*.snap
+            release/*.zip
+            release/*.yml
