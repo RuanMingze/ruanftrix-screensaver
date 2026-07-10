@@ -233,31 +233,18 @@
       margin-top: 6px;
     }
 
-    .hint-warning {
-      display: flex;
-      align-items: flex-start;
-      gap: 8px;
-      padding: 10px 12px;
-      background: rgba(255, 170, 0, 0.08);
-      border-left: 3px solid #ffaa00;
-      border-radius: 4px;
+    .hint-burnin {
       font-size: 12px;
       line-height: 1.6;
-      color: #ffaa00;
+      color: #ff5577;
     }
 
-    .hint-warning .hint-icon {
-      flex-shrink: 0;
-      font-size: 14px;
+    .hint-burnin-text {
+      color: #ff5577;
     }
 
-    .hint-warning .hint-text {
-      flex: 1;
-      color: var(--text-secondary);
-    }
-
-    .hint-warning .hint-text strong {
-      color: #ffaa00;
+    .hint-burnin-text strong {
+      color: #ff5577;
       font-weight: 600;
     }
 
@@ -1589,9 +1576,8 @@
         <span class="checkbox-label">自动切换壁纸</span>
       </div>
 
-      <div class="form-group hint-warning" id="burnInHint" style="display: none; margin-top: 8px; margin-left: 32px;">
-        <span class="hint-icon">⚠️</span>
-        <span class="hint-text">关闭自动切换后，屏保将长时间显示同一张静态图片。<strong>这并不会有效缓解 LCD / OLED 屏幕的烧屏（残影）问题</strong>，反而可能加剧烧屏风险。建议保持自动切换以让像素得到充分"休息"。</span>
+      <div class="hint-burnin" id="burnInHint" style="display: none; margin-top: 8px;">
+        <span class="hint-burnin-text"></span>
       </div>
 
       <div class="form-group" id="imageIntervalGroup" style="margin-top: 16px;">
@@ -1707,17 +1693,67 @@
     <div class="modal" style="max-width: 520px;">
       <div class="modal-title">开机自启动配置教程</div>
       <div class="modal-desc">
-        <p style="margin-bottom: 12px;">通过修改注册表实现开机自启动：</p>
-        <ol style="margin-left: 20px; line-height: 1.8;">
-          <li>按 Win + R，输入 <code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">regedit</code> 打开注册表编辑器</li>
-          <li>定位到路径：<br><code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px; word-break: break-all; font-size: 12px;">HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run</code></li>
-          <li>在右侧空白处右键 → 新建 → 字符串值</li>
-          <li>名称填写：<code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">RuanftrixScreensaver</code></li>
-          <li>双击新建的项，数值数据填写（注意路径用双引号）：<br><code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px; word-break: break-all; font-size: 12px;">"C:\Program Files\Ruanftrix-Screensaver\Ruanftrix-Screensaver.exe" --tray</code></li>
-          <li>点击确定完成</li>
-        </ol>
-        <p style="margin-top: 16px; color: var(--text-muted); font-size: 12px;">提示：将 exe 文件的实际安装路径替换到上面。便携版用户请填写便携版 exe 的完整路径。使用 <code style="background: var(--bg-tertiary); padding: 1px 4px; border-radius: 3px;">--tray</code> 参数后，程序会直接最小化到托盘，不会显示设置窗口。</p>
-        <p style="margin-top: 8px; color: var(--text-muted); font-size: 12px;">如需取消自启动，再次打开该注册表项并删除即可。</p>
+        <!-- Windows 教程 -->
+        <div class="tutorial-platform" data-platform="win">
+          <p style="margin-bottom: 12px;">通过修改注册表实现开机自启动：</p>
+          <ol style="margin-left: 20px; line-height: 1.8;">
+            <li>按 Win + R，输入 <code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">regedit</code> 打开注册表编辑器</li>
+            <li>定位到路径：<br><code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px; word-break: break-all; font-size: 12px;">HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run</code></li>
+            <li>在右侧空白处右键 → 新建 → 字符串值</li>
+            <li>名称填写：<code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">RuanftrixScreensaver</code></li>
+            <li>双击新建的项，数值数据填写（注意路径用双引号）：<br><code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px; word-break: break-all; font-size: 12px;">"C:\Program Files\Ruanftrix-Screensaver\Ruanftrix-Screensaver.exe" --tray</code></li>
+            <li>点击确定完成</li>
+          </ol>
+          <p style="margin-top: 16px; color: var(--text-muted); font-size: 12px;">提示：将 exe 文件的实际安装路径替换到上面。便携版用户请填写便携版 exe 的完整路径。使用 <code style="background: var(--bg-tertiary); padding: 1px 4px; border-radius: 3px;">--tray</code> 参数后，程序会直接最小化到托盘，不会显示设置窗口。</p>
+          <p style="margin-top: 8px; color: var(--text-muted); font-size: 12px;">如需取消自启动，再次打开该注册表项并删除即可。</p>
+        </div>
+
+        <!-- macOS 教程 -->
+        <div class="tutorial-platform" data-platform="mac" style="display: none;">
+          <p style="margin-bottom: 12px;">macOS 通过「登录项」实现开机自启动：</p>
+          <ol style="margin-left: 20px; line-height: 1.8;">
+            <li>打开「<strong>系统设置</strong>」→「<strong>通用</strong>」→「<strong>登录项与扩展</strong>」</li>
+            <li>在「<strong>登录时打开</strong>」区域点击 <code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">+</code> 号</li>
+            <li>在弹出的文件选择器中，找到并选中 Ruanftrix 应用（默认位置：<code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">/Applications/Ruanftrix.app</code>）</li>
+            <li>点击「<strong>添加</strong>」完成</li>
+          </ol>
+          <p style="margin-top: 16px; color: var(--text-muted); font-size: 12px;">提示：如果看不到「登录项与扩展」，可能是 macOS 版本过低（需要 macOS 13 Ventura 或更高）。</p>
+          <p style="margin-top: 8px; color: var(--text-muted); font-size: 12px;"><strong>命令行方法</strong>（适合开发者）——将以下命令粘贴到终端：<br><code style="background: var(--bg-tertiary); padding: 4px 6px; border-radius: 4px; word-break: break-all; font-size: 12px; display: inline-block; margin-top: 4px;">osascript -e 'tell application "System Events" to make login item at end with properties {path:"/Applications/Ruanftrix.app", hidden:true}'</code></p>
+          <p style="margin-top: 8px; color: var(--text-muted); font-size: 12px;">如需取消自启动，在「登录项」列表中选中 Ruanftrix 并点击 <code style="background: var(--bg-tertiary); padding: 1px 4px; border-radius: 3px;">−</code> 号即可。</p>
+        </div>
+
+        <!-- Linux 教程 -->
+        <div class="tutorial-platform" data-platform="linux" style="display: none;">
+          <p style="margin-bottom: 12px;">Linux 桌面环境通过 <code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">.desktop</code> 文件实现开机自启动：</p>
+
+          <p style="margin-top: 12px; margin-bottom: 6px;"><strong>方法一：图形化（GNOME / KDE 等）</strong></p>
+          <ol style="margin-left: 20px; line-height: 1.8;">
+            <li>打开「<strong>启动应用程序</strong>」（GNOME）或「<strong>自动启动</strong>」（KDE）系统设置</li>
+            <li>点击「<strong>添加</strong>」按钮</li>
+            <li>名称填写：<code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">Ruanftrix Screensaver</code></li>
+            <li>命令填写：<code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px; word-break: break-all; font-size: 12px;">/opt/Ruanftrix-Screensaver/ruanftrix-screensaver --tray</code></li>
+            <li>注释（可选）：<code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">Ruanftrix 屏保托盘模式</code></li>
+            <li>点击「<strong>添加</strong>」完成</li>
+          </ol>
+
+          <p style="margin-top: 16px; margin-bottom: 6px;"><strong>方法二：手动创建 .desktop 文件（通用）</strong></p>
+          <ol style="margin-left: 20px; line-height: 1.8;">
+            <li>在终端创建自启动目录（如果不存在）：<br><code style="background: var(--bg-tertiary); padding: 4px 6px; border-radius: 4px; word-break: break-all; font-size: 12px; display: inline-block; margin-top: 4px;">mkdir -p ~/.config/autostart</code></li>
+            <li>创建文件 <code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">~/.config/autostart/ruanftrix-screensaver.desktop</code>，内容如下：<pre style="background: var(--bg-tertiary); padding: 10px; border-radius: 4px; font-size: 12px; margin-top: 6px; line-height: 1.5; overflow-x: auto;">[Desktop Entry]
+Type=Application
+Name=Ruanftrix Screensaver
+Comment=Ruanftrix 屏保托盘模式
+Exec=/opt/Ruanftrix-Screensaver/ruanftrix-screensaver --tray
+Icon=ruanftrix-screensaver
+Terminal=false
+X-GNOME-Autostart-enabled=true
+Hidden=false</pre></li>
+            <li>保存文件，下次开机即可自动启动</li>
+          </ol>
+
+          <p style="margin-top: 16px; color: var(--text-muted); font-size: 12px;">提示：将 <code style="background: var(--bg-tertiary); padding: 1px 4px; border-radius: 3px;">Exec</code> 路径替换为 Ruanftrix 实际安装位置（DEB 包默认安装到 <code style="background: var(--bg-tertiary); padding: 1px 4px; border-radius: 3px;">/opt/Ruanftrix-Screensaver/</code>，AppImage 用户请填写 AppImage 的完整路径）。使用 <code style="background: var(--bg-tertiary); padding: 1px 4px; border-radius: 3px;">--tray</code> 参数后，程序会直接最小化到托盘，不会显示设置窗口。</p>
+          <p style="margin-top: 8px; color: var(--text-muted); font-size: 12px;">如需取消自启动，从「启动应用程序」列表中删除，或删除 <code style="background: var(--bg-tertiary); padding: 1px 4px; border-radius: 3px;">~/.config/autostart/</code> 目录下的 .desktop 文件。</p>
+        </div>
       </div>
       <div class="modal-buttons">
         <button class="modal-btn modal-btn-confirm" id="btnAutostartTutorialClose" type="button" style="width: 100%;">关闭</button>

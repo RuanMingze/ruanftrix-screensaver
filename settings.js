@@ -178,12 +178,32 @@ function switchSourcePanel(source) {
 }
 
 function updateBurnInHint() {
-  // 仅在非视频源且关闭了自动切换时显示烧屏提示
-  const isVideo = currentSettings.wallpaperSource === 'video' || currentSettings.wallpaperSource === 'videoUrl';
+  // 根据当前壁纸源 + autoSwitch 状态显示不同文案
+  const source = currentSettings.wallpaperSource;
   const autoSwitchChecked = document.getElementById('autoSwitch').classList.contains('checked');
   const burnInHint = document.getElementById('burnInHint');
-  if (burnInHint) {
-    burnInHint.style.display = (!isVideo && !autoSwitchChecked) ? 'flex' : 'none';
+  const burnInText = burnInHint ? burnInHint.querySelector('.hint-burnin-text') : null;
+  if (!burnInHint || !burnInText) return;
+
+  // 1. 本地单图 / 自定义 URL：autoSwitch 永远无法开启 → 永久提示
+  if (source === 'local' || source === 'url') {
+    burnInText.innerHTML = '当前壁纸源<strong>不支持自动切换</strong>，若你的屏幕是 LCD 或 OLED，长期显示同一张静态图片<strong>可能加剧烧屏（残影）</strong>。建议改用「壁纸 API / 本地文件夹 / URL 视频」等支持自动切换的来源。';
+    burnInHint.style.display = 'block';
+    return;
+  }
+
+  // 2. 视频源：像素持续运动，天然不烧屏 → 不提示
+  if (source === 'video' || source === 'videoUrl') {
+    burnInHint.style.display = 'none';
+    return;
+  }
+
+  // 3. 其他源（壁纸 API / 本地文件夹 / 多 URL / Bing）：根据 autoSwitch 状态决定
+  if (!autoSwitchChecked) {
+    burnInText.innerHTML = '若你的屏幕是 LCD 或 OLED，<strong>建议开启自动切换</strong>或改用「视频 / URL 视频」等来源，否则长期显示同一张静态图片<strong>并不会有效缓解烧屏（残影）</strong>，反而可能加剧风险。';
+    burnInHint.style.display = 'block';
+  } else {
+    burnInHint.style.display = 'none';
   }
 }
 
@@ -865,6 +885,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 开机自启动教程按钮
   const autostartTutorialModal = document.getElementById('autostartTutorialModal');
   document.getElementById('btnAutostartTutorial').addEventListener('click', () => {
+    showPlatformTutorial();
     autostartTutorialModal.classList.add('visible');
   });
   document.getElementById('btnAutostartTutorialClose').addEventListener('click', () => {
@@ -875,6 +896,16 @@ document.addEventListener('DOMContentLoaded', () => {
       autostartTutorialModal.classList.remove('visible');
     }
   });
+
+  // 根据平台显示对应的自启动教程
+  function showPlatformTutorial() {
+    let platform = 'win';
+    if (document.body.classList.contains('platform-mac')) platform = 'mac';
+    else if (document.body.classList.contains('platform-linux')) platform = 'linux';
+    document.querySelectorAll('.tutorial-platform').forEach(el => {
+      el.style.display = el.dataset.platform === platform ? 'block' : 'none';
+    });
+  }
 
   // 娱乐模式按钮
   document.getElementById('btnEntertainmentMode').addEventListener('click', () => {
