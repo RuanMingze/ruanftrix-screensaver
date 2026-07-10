@@ -1,9 +1,16 @@
 const electron = window.require ? window.require('electron') : require('electron');
 const { ipcRenderer } = electron;
 
-// 用户原配置失败时的回退壁纸 URL 池（不会覆盖用户设置）
-// 加载失败时按顺序尝试，加载成功即停
-const FALLBACK_WALLPAPER_URLS = [
+// 用户原配置失败时的回退壁纸池（不会覆盖用户设置）
+// 优先使用本地 assets/dw*.{png,jpg}（打包进应用，离线可用），
+// 如果本地文件加载失败，再降级到在线 URL
+const FALLBACK_WALLPAPER_LOCAL = [
+  'assets/dw1.png',
+  'assets/dw2.png',
+  'assets/dw3.jpg',
+  'assets/dw4.png'
+];
+const FALLBACK_WALLPAPER_ONLINE = [
   'https://luckycola.com.cn/public/imgs/luckycola_Imghub_forever_KXUAEbuJ17831741447088712.png',
   'https://luckycola.com.cn/public/imgs/luckycola_Imghub_forever_XDx1So5a17831741555375465.png',
   'https://luckycola.com.cn/public/imgs/luckycola_Imghub_forever_5Z1Q1XpG17752164264304110.jpg',
@@ -300,16 +307,28 @@ function updateWallpaper() {
 }
 
 function tryFallbackWallpaper() {
-  const fallbackUrl = FALLBACK_WALLPAPER_URLS[fallbackIndex % FALLBACK_WALLPAPER_URLS.length];
-  fallbackIndex++;
+  // 优先尝试本地资源（离线可用），全部失败再降级到在线 URL
+  tryFallbackFromList(FALLBACK_WALLPAPER_LOCAL, 0, () => {
+    showToast('本地默认壁纸加载失败，尝试在线资源');
+    // 重置索引，从在线池开始
+    fallbackIndex = 0;
+    tryFallbackFromList(FALLBACK_WALLPAPER_ONLINE, 0, () => {
+      showToast('所有默认壁纸加载失败，请检查网络');
+    });
+  });
+}
+
+function tryFallbackFromList(list, startIndex, onAllFailed) {
+  const fallbackUrl = list[startIndex % list.length];
   preloadImage(fallbackUrl, (err, src) => {
     if (err) {
-      console.error('回退壁纸加载失败:', err);
-      // 继续尝试下一个
-      if (fallbackIndex < FALLBACK_WALLPAPER_URLS.length * 2) {
-        tryFallbackWallpaper();
+      console.error('回退壁纸加载失败:', fallbackUrl, err);
+      const nextIndex = startIndex + 1;
+      if (nextIndex < list.length) {
+        tryFallbackFromList(list, nextIndex, onAllFailed);
       } else {
-        showToast('默认壁纸也加载失败，请检查网络');
+        // 整个池子都失败
+        if (onAllFailed) onAllFailed();
       }
       return;
     }
@@ -329,12 +348,15 @@ function tryFallbackWallpaper() {
         currentEl.classList.add('loading');
       }, 1000);
     }, 100);
+    // 记录当前使用的池（用于轮播）
+    currentFallbackList = list;
     // 进入回退模式：强制启动回退池内部轮播（不依赖用户设置，也不影响用户原设置）
     startFallbackRotation();
   });
 }
 
 let fallbackTimer = null;
+let currentFallbackList = null; // 当前正在使用的回退池（local / online）
 function startFallbackRotation() {
   // 先停止任何已存在的轮播（包括用户的 autoSwitch 轮播）
   if (imageTimer) {
@@ -344,14 +366,14 @@ function startFallbackRotation() {
   if (fallbackTimer) {
     clearInterval(fallbackTimer);
   }
-  // 用回退池中下一张（下一轮已经显示过了，这里从当前 fallbackIndex 继续）
+  if (!currentFallbackList) currentFallbackList = FALLBACK_WALLPAPER_LOCAL;
   const interval = Math.max(5, (settings.imageInterval || 30)) * 1000;
   fallbackTimer = setInterval(() => {
-    const url = FALLBACK_WALLPAPER_URLS[fallbackIndex % FALLBACK_WALLPAPER_URLS.length];
-    fallbackIndex++;
+    fallbackIndex = (fallbackIndex + 1) % currentFallbackList.length;
+    const url = currentFallbackList[fallbackIndex];
     preloadImage(url, (err, src) => {
       if (err) {
-        console.error('回退轮播跳过:', err);
+        console.error('回退轮播跳过:', url, err);
         return;
       }
       const nextWallpaper = currentWallpaper === 1 ? 2 : 1;
