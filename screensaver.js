@@ -323,11 +323,57 @@ function tryFallbackWallpaper() {
         currentEl.classList.add('loading');
       }, 1000);
     }, 100);
-    // 恢复自动轮播（如果用户原本开启了）
-    if (settings.autoSwitchWallpaper && !isFixedSource()) {
-      startImageRotation();
-    }
+    // 进入回退模式：强制启动回退池内部轮播（不依赖用户设置，也不影响用户原设置）
+    startFallbackRotation();
   });
+}
+
+let fallbackTimer = null;
+function startFallbackRotation() {
+  // 先停止任何已存在的轮播（包括用户的 autoSwitch 轮播）
+  if (imageTimer) {
+    clearInterval(imageTimer);
+    imageTimer = null;
+  }
+  if (fallbackTimer) {
+    clearInterval(fallbackTimer);
+  }
+  // 用回退池中下一张（下一轮已经显示过了，这里从当前 fallbackIndex 继续）
+  const interval = Math.max(5, (settings.imageInterval || 30)) * 1000;
+  fallbackTimer = setInterval(() => {
+    const url = FALLBACK_WALLPAPER_URLS[fallbackIndex % FALLBACK_WALLPAPER_URLS.length];
+    fallbackIndex++;
+    preloadImage(url, (err, src) => {
+      if (err) {
+        console.error('回退轮播跳过:', err);
+        return;
+      }
+      const nextWallpaper = currentWallpaper === 1 ? 2 : 1;
+      const currentEl = document.getElementById(`wallpaper${currentWallpaper}`);
+      const nextEl = document.getElementById(`wallpaper${nextWallpaper}`);
+      if (!currentEl || !nextEl) return;
+      nextEl.style.backgroundImage = `url(${src})`;
+      nextEl.classList.remove('loading');
+      setTimeout(() => {
+        currentEl.classList.remove('active');
+        nextEl.classList.add('active');
+        currentWallpaper = nextWallpaper;
+        setTimeout(() => {
+          currentEl.style.backgroundImage = '';
+          currentEl.classList.add('loading');
+        }, 1000);
+      }, 100);
+    });
+  }, interval);
+  // 启动进度条
+  startProgressBar();
+}
+
+function stopFallbackRotation() {
+  if (fallbackTimer) {
+    clearInterval(fallbackTimer);
+    fallbackTimer = null;
+  }
 }
 
 let toastTimer = null;
@@ -354,6 +400,8 @@ function switchWallpaper() {
 
 function startImageRotation() {
   stopImageRotation();
+  // 用户原始壁纸恢复轮播时，停止回退池轮播
+  stopFallbackRotation();
 
   if (!settings.autoSwitchWallpaper) {
     return;
