@@ -174,6 +174,17 @@ function switchSourcePanel(source) {
   if (autoSwitchContainer) autoSwitchContainer.style.display = isFixed ? 'none' : '';
   if (imageIntervalGroup) imageIntervalGroup.style.display = isFixed ? 'none' : '';
   updateVideoAudioVisibility(source);
+  updateBurnInHint();
+}
+
+function updateBurnInHint() {
+  // 仅在非视频源且关闭了自动切换时显示烧屏提示
+  const isVideo = currentSettings.wallpaperSource === 'video' || currentSettings.wallpaperSource === 'videoUrl';
+  const autoSwitchChecked = document.getElementById('autoSwitch').classList.contains('checked');
+  const burnInHint = document.getElementById('burnInHint');
+  if (burnInHint) {
+    burnInHint.style.display = (!isVideo && !autoSwitchChecked) ? 'flex' : 'none';
+  }
 }
 
 function updateVideoAudioVisibility(source) {
@@ -658,6 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('autoSwitchContainer').addEventListener('click', () => {
     document.getElementById('autoSwitch').classList.toggle('checked');
     updateAutoSwitchGroupState();
+    updateBurnInHint();
     onSettingsChanged();
   });
 

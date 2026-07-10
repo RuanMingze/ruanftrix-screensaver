@@ -233,6 +233,34 @@
       margin-top: 6px;
     }
 
+    .hint-warning {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 10px 12px;
+      background: rgba(255, 170, 0, 0.08);
+      border-left: 3px solid #ffaa00;
+      border-radius: 4px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: #ffaa00;
+    }
+
+    .hint-warning .hint-icon {
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    .hint-warning .hint-text {
+      flex: 1;
+      color: var(--text-secondary);
+    }
+
+    .hint-warning .hint-text strong {
+      color: #ffaa00;
+      font-weight: 600;
+    }
+
     .input-control {
       width: 100%;
       padding: 13px 16px;
@@ -1559,6 +1587,11 @@
       <div class="checkbox-container" id="autoSwitchContainer">
         <div class="checkbox checked" id="autoSwitch"></div>
         <span class="checkbox-label">自动切换壁纸</span>
+      </div>
+
+      <div class="form-group hint-warning" id="burnInHint" style="display: none; margin-top: 8px; margin-left: 32px;">
+        <span class="hint-icon">⚠️</span>
+        <span class="hint-text">关闭自动切换后，屏保将长时间显示同一张静态图片。<strong>这并不会有效缓解 LCD / OLED 屏幕的烧屏（残影）问题</strong>，反而可能加剧烧屏风险。建议保持自动切换以让像素得到充分"休息"。</span>
       </div>
 
       <div class="form-group" id="imageIntervalGroup" style="margin-top: 16px;">
