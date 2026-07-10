@@ -133,9 +133,17 @@ jobs:
           echo "查找 release 目录中的 macOS 文件..."
           ls -la release/
           echo ""
-          echo "上传到 v1.0.8 Release..."
-          gh release upload v1.0.8 release/*.dmg release/*.zip release/*.yml --clobber 2>&1 || \
-            gh release upload v1.0.8 release/*.dmg release/*.zip release/*.yml 2>&1
+          shopt -s nullglob
+          files=(release/*.dmg release/*.zip release/*.yml)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "未找到 macOS 文件，跳过上传"
+            exit 0
+          fi
+          echo "将上传以下文件到 v1.0.8 Release："
+          printf '  %s\n' "${files[@]}"
+          echo ""
+          gh release upload v1.0.8 "${files[@]}" --clobber 2>&1 || \
+            gh release upload v1.0.8 "${files[@]}" 2>&1
           echo ""
           echo "上传完成，查看 v1.0.8 Release 当前文件列表："
           gh release view v1.0.8 --json assets --jq '.assets[] | {name: .name, size: .size}'
@@ -148,9 +156,17 @@ jobs:
           echo "查找 release 目录中的 Linux 文件..."
           ls -la release/
           echo ""
-          echo "上传到 v1.0.8 Release..."
-          gh release upload v1.0.8 release/*.AppImage release/*.deb release/*.snap release/*.zip release/*.yml --clobber 2>&1 || \
-            gh release upload v1.0.8 release/*.AppImage release/*.deb release/*.snap release/*.zip release/*.yml 2>&1
+          shopt -s nullglob
+          files=(release/*.AppImage release/*.deb release/*.snap release/*.zip release/*.yml)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "未找到 Linux 文件，跳过上传"
+            exit 0
+          fi
+          echo "将上传以下文件到 v1.0.8 Release："
+          printf '  %s\n' "${files[@]}"
+          echo ""
+          gh release upload v1.0.8 "${files[@]}" --clobber 2>&1 || \
+            gh release upload v1.0.8 "${files[@]}" 2>&1
           echo ""
           echo "上传完成，查看 v1.0.8 Release 当前文件列表："
           gh release view v1.0.8 --json assets --jq '.assets[] | {name: .name, size: .size}'
