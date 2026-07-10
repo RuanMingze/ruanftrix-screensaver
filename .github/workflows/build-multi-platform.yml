@@ -35,19 +35,61 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: pnpm install
 
+      # ============== Windows 构建 ==============
       - name: 构建 Windows
         if: matrix.os == 'windows-latest'
         shell: pwsh
         run: pnpm run build:win
 
+      # ============== macOS 签名 + 构建 ==============
+      - name: 写入 macOS 签名证书
+        if: matrix.os == 'macos-latest' && env.MAC_CERT_P12 != ''
+        env:
+          MAC_CERT_P12: ${{ secrets.MAC_CERT_P12 }}
+        run: |
+          echo "$MAC_CERT_P12" | base64 --decode > $RUNNER_TEMP/certificate.p12
+          echo "证书已写入 $RUNNER_TEMP/certificate.p12"
+
+      - name: 导入 macOS 签名证书到钥匙串
+        if: matrix.os == 'macos-latest' && env.MAC_CERT_P12 != ''
+        env:
+          MAC_CERT_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain-db
+          security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security set-keychain-settings -lut 21600 $KEYCHAIN_PATH
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          security list-keychain -d user -s $KEYCHAIN_PATH
+          security import $RUNNER_TEMP/certificate.p12 -k $KEYCHAIN_PATH -P "$MAC_CERT_PASSWORD" -A -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
+          echo "证书已导入到临时钥匙串"
+
       - name: 构建 macOS
         if: matrix.os == 'macos-latest'
-        run: pnpm run build:mac
+        env:
+          # 代码签名
+          CSC_LINK: ${{ env.MAC_CERT_P12 && format('{0}/certificate.p12', env.RUNNER_TEMP) || '' }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CERT_PASSWORD }}
+          # Apple 公证
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          if [ -n "$CSC_LINK" ]; then
+            echo "启用代码签名 + Apple 公证"
+            export CSC_LINK="file://$RUNNER_TEMP/certificate.p12"
+          else
+            echo "未配置签名证书，跳过签名（仍可本地测试，但用户首次打开会被 Gatekeeper 拦截）"
+          fi
+          pnpm run build:mac
 
+      # ============== Linux 构建 ==============
       - name: 构建 Linux
         if: matrix.os == 'ubuntu-latest'
         run: pnpm run build:linux
 
+      # ============== 上传构建产物 ==============
       - name: 上传 Windows 构建产物
         if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
