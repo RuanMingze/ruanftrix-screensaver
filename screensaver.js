@@ -10,6 +10,8 @@ const FALLBACK_WALLPAPER_URLS = [
   'https://luckycola.com.cn/public/imgs/luckycola_Imghub_forever_cjIr5FKD17701864981356073.png'
 ];
 let fallbackIndex = 0;
+// 标记是否已处于回退模式：避免 1 秒后 startImageRotation 覆盖回退轮播
+let isInFallbackMode = false;
 
 const styleCategories = {
   random: '',
@@ -263,6 +265,10 @@ function updateWallpaper() {
     if (error) {
       console.error('获取壁纸失败:', error, '→ 尝试回退到默认壁纸');
       loadingIndicator.classList.remove('visible');
+      // 标记进入回退模式（避免 1 秒后 startImageRotation 覆盖回退轮播）
+      isInFallbackMode = true;
+      // 停止用户原始轮播
+      stopImageRotation();
       // 弹出左下角提示（不覆盖用户设置）
       showToast('壁纸加载失败，使用默认壁纸');
       // 改用回退 URL 池
@@ -392,13 +398,18 @@ function showToast(text) {
 function switchWallpaper() {
   if (isFixedSource()) return;
   stopImageRotation();
+  stopFallbackRotation();
+  isInFallbackMode = false;
   updateWallpaper();
   setTimeout(() => {
+    if (isInFallbackMode) return;  // 如果回退也失败了，不要启动用户轮播
     startImageRotation();
   }, 2000);
 }
 
 function startImageRotation() {
+  // 如果已处于回退模式，不要启动用户原始轮播
+  if (isInFallbackMode) return;
   stopImageRotation();
   // 用户原始壁纸恢复轮播时，停止回退池轮播
   stopFallbackRotation();
@@ -589,6 +600,11 @@ async function init() {
   updateWallpaper();
 
   setTimeout(() => {
+    // 如果已处于回退模式，不要启动用户原始轮播（避免覆盖回退轮播）
+    if (isInFallbackMode) {
+      startClock();
+      return;
+    }
     startImageRotation();
     startClock();
   }, 1000);
