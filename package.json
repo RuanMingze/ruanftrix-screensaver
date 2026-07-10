@@ -1,6 +1,6 @@
 {
   "name": "ruanftrix-screensaver",
-  "version": "1.0.0",
+  "version": "1.0.8",
   "description": "Ruanftrix Screensaver - A beautiful wallpaper screensaver",
   "main": "main.js",
   "scripts": {
@@ -34,6 +34,7 @@
       "preview.html",
       "preview.js",
       "assets/**/*",
+      "CHANGELOG.md",
       "package.json"
     ],
     "win": {

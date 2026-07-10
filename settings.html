@@ -30,7 +30,7 @@
       width: 8px;
     }
     ::-webkit-scrollbar-track {
-      background: var(--bg-secondary);
+      background: transparent;
     }
     ::-webkit-scrollbar-thumb {
       background: var(--border-light);
@@ -46,6 +46,17 @@
       color: var(--text-primary);
       min-height: 100vh;
       -webkit-font-smoothing: antialiased;
+      overflow: hidden;
+    }
+
+    .scroll-outer {
+      height: 100vh;
+      padding-top: 48px;
+      box-sizing: border-box;
+    }
+
+    .scroll-wrapper {
+      height: 100%;
       overflow-y: auto;
       overflow-x: hidden;
     }
@@ -63,7 +74,7 @@
       top: 0;
       left: 0;
       right: 0;
-      z-index: 1000;
+      z-index: 9999;
     }
 
     .titlebar-title {
@@ -73,6 +84,17 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      user-select: none;
+    }
+
+    .titlebar-title img {
+      transition: transform 0.15s ease;
+      -webkit-app-region: no-drag;
+      cursor: pointer;
+    }
+
+    .titlebar-title img:active {
+      transform: scale(0.92);
     }
 
     .titlebar-title img {
@@ -118,7 +140,7 @@
     .container {
       max-width: 520px;
       margin: 0 auto;
-      padding: 72px 20px 24px;
+      padding: 24px 20px 24px;
     }
 
     .header {
@@ -535,6 +557,24 @@
       color: var(--accent-light);
     }
 
+    .beta-tag {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 5px;
+      background: var(--accent);
+      color: white;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      line-height: 1;
+    }
+
+    .source-tab {
+      position: relative;
+    }
+
     .source-panel {
       display: none;
       padding-top: 4px;
@@ -680,7 +720,63 @@
     .footer p {
       font-size: 12px;
       color: var(--text-muted);
-      letter-spacing: 0.3px;
+      letter-spacing: 0.5px;
+    }
+
+    .footer-sep {
+      margin: 0 6px;
+      color: var(--border-light);
+    }
+
+    .footer-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer-link:hover {
+      color: var(--accent);
+    }
+
+    .changelog-entry {
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .changelog-entry:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .changelog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .changelog-version {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .changelog-date {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .changelog-list {
+      margin-left: 20px;
+      line-height: 1.7;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .changelog-list li {
+      margin-bottom: 4px;
     }
 
     .custom-input-btn {
@@ -706,6 +802,64 @@
     .custom-input-btn svg {
       width: 13px;
       height: 13px;
+    }
+
+    .entertainment-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 20px;
+      background-color: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .entertainment-btn:hover {
+      border-color: var(--accent);
+      background-color: rgba(255, 123, 0, 0.08);
+    }
+
+    .entertainment-btn.active {
+      background-color: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .entertainment-btn svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .entertainment-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 10px 14px;
+      background-color: rgba(255, 123, 0, 0.1);
+      border: 1px solid rgba(255, 123, 0, 0.3);
+      border-radius: 8px;
+      color: var(--accent-light);
+      font-size: 13px;
+    }
+
+    .entertainment-status-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
     }
 
     .number-input-group {
@@ -887,14 +1041,145 @@
     }
 
   </style>
+  <style>
+    /* ===================== 平台特定标题栏 ===================== */
+
+    /* Windows: 显示自定义按钮组 */
+    body:not(.platform-mac):not(.platform-linux) .titlebar-buttons {
+      display: flex;
+    }
+    body:not(.platform-mac):not(.platform-linux) .titlebar-traffic-lights,
+    body:not(.platform-mac):not(.platform-linux) .titlebar-linux-buttons {
+      display: none;
+    }
+
+    /* macOS: 显示红绿灯 */
+    body.platform-mac .titlebar-traffic-lights {
+      display: flex;
+    }
+    body.platform-mac .titlebar-buttons,
+    body.platform-mac .titlebar-linux-buttons {
+      display: none;
+    }
+    body.platform-mac #titlebarTitle {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      justify-content: center;
+      pointer-events: none;
+    }
+    body.platform-mac #titlebarTitle #titlebarIcon,
+    body.platform-mac #titlebarTitle span {
+      pointer-events: auto;
+    }
+
+    /* Linux: 显示自定义系统按钮（最大、最小、关闭） */
+    body.platform-linux .titlebar-linux-buttons {
+      display: flex;
+    }
+    body.platform-linux .titlebar-buttons,
+    body.platform-linux .titlebar-traffic-lights {
+      display: none;
+    }
+
+    /* macOS 红绿灯样式 */
+    .titlebar-traffic-lights {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 0 0 0 5px;
+      -webkit-app-region: no-drag;
+    }
+    .traffic-light {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: filter 0.15s ease;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .traffic-light:hover {
+      filter: brightness(0.85);
+    }
+    .traffic-light.close { background: #ff5f57; }
+    .traffic-light.minimize { background: #febc2e; }
+    .traffic-light.maximize { background: #28c840; }
+    .traffic-light svg {
+      width: 8px;
+      height: 8px;
+      opacity: 0;
+      stroke: rgba(0, 0, 0, 0.6);
+      stroke-width: 1.5;
+    }
+    .traffic-light:hover svg {
+      opacity: 1;
+    }
+
+    /* Linux 系统按钮样式 */
+    .titlebar-linux-buttons {
+      display: none;
+      align-items: center;
+      -webkit-app-region: no-drag;
+      gap: 0;
+    }
+    .linux-btn {
+      width: 36px;
+      height: 32px;
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s ease;
+    }
+    .linux-btn:hover {
+      background: var(--bg-hover, rgba(255,255,255,0.05));
+    }
+    .linux-btn.close:hover {
+      background: #e81123;
+      color: white;
+    }
+    .linux-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+  </style>
 </head>
 <body>
-  <div class="titlebar">
-    <div class="titlebar-title">
-      <img src="assets/app-icon.png" alt="icon">
+  <div class="titlebar" id="customTitlebar">
+    <!-- macOS 交通灯 -->
+    <div class="titlebar-traffic-lights" id="macTrafficLights">
+      <div class="traffic-light close" id="macClose" title="关闭">
+        <svg viewBox="0 0 12 12" fill="none" stroke-linecap="round">
+          <path d="M3 3 L9 9 M9 3 L3 9" />
+        </svg>
+      </div>
+      <div class="traffic-light minimize" id="macMinimize" title="最小化">
+        <svg viewBox="0 0 12 12" fill="none" stroke-linecap="round">
+          <path d="M2 6 L10 6" />
+        </svg>
+      </div>
+      <div class="traffic-light maximize" id="macMaximize" title="最大化">
+        <svg viewBox="0 0 12 12" fill="none" stroke-linecap="round">
+          <path d="M6 2 L6 10 M2 6 L10 6" />
+        </svg>
+      </div>
+    </div>
+
+    <div class="titlebar-title" id="titlebarTitle">
+      <img src="assets/app-icon.png" alt="icon" id="titlebarIcon">
       <span>Ruanftrix 屏保设置</span>
     </div>
-    <div class="titlebar-buttons">
+
+    <!-- Windows 按钮 -->
+    <div class="titlebar-buttons" id="winButtons">
       <button class="titlebar-btn" id="btnMinimize" title="最小化">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
           <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -907,8 +1192,30 @@
         </svg>
       </button>
     </div>
+
+    <!-- Linux 系统按钮 -->
+    <div class="titlebar-linux-buttons" id="linuxButtons">
+      <button class="linux-btn minimize" id="linuxMinimize" title="最小化">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+      <button class="linux-btn maximize" id="linuxMaximize" title="最大化">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <rect x="5" y="5" width="14" height="14" rx="1" />
+        </svg>
+      </button>
+      <button class="linux-btn close" id="linuxClose" title="关闭">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
   </div>
 
+  <div class="scroll-outer">
+  <div class="scroll-wrapper">
   <div class="container">
     <div class="header">
       <div class="logo">
@@ -954,6 +1261,21 @@
           <div class="toggle-option" data-exit="activity">任意动作退出</div>
         </div>
         <span class="label-secondary">仅手动关闭：只能点击右上角关闭按钮退出；任意动作退出：移动鼠标或按键即退出</span>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0;">
+        <label class="label">娱乐模式</label>
+        <button class="entertainment-btn" id="btnEntertainmentMode" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span id="entertainmentBtnText">开启娱乐模式</span>
+        </button>
+        <div class="entertainment-status" id="entertainmentStatus" style="display: none;">
+          <span class="entertainment-status-dot"></span>
+          <span>娱乐模式已开启 - 屏保计时已暂停</span>
+        </div>
+        <span class="label-secondary">开启后屏保将不再自动触发，适用于观看视频、演示等场景</span>
       </div>
     </div>
 
@@ -1001,6 +1323,33 @@
             <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
           </svg>
           <span>本地文件夹</span>
+        </div>
+        <div class="source-tab" data-source="video">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="23 7 16 12 23 17 23 7"></polygon>
+            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+          </svg>
+          <span>本地视频</span>
+          <span class="beta-tag">beta</span>
+        </div>
+        <div class="source-tab" data-source="videoUrl">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+            <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+          </svg>
+          <span>URL视频</span>
+          <span class="beta-tag">beta</span>
+        </div>
+        <div class="source-tab" data-source="customApi">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="7.5 4.21 12 6.81 16.5 4.21"></polyline>
+            <polyline points="7.5 19.79 7.5 14.6 3 12"></polyline>
+            <polyline points="21 12 16.5 14.6 16.5 19.79"></polyline>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+          <span>自定义API</span>
         </div>
       </div>
 
@@ -1175,6 +1524,30 @@
         </div>
         <span class="label-secondary">选择一个包含多张图片的文件夹，将自动轮播其中的图片</span>
       </div>
+
+      <div class="source-panel" id="panel-video">
+        <div class="file-picker">
+          <div class="file-picker-info" id="localVideoInfo">未选择视频</div>
+          <button class="btn btn-secondary btn-picker" id="btnSelectLocalVideo" type="button">选择视频</button>
+        </div>
+        <span class="label-secondary">选择一个本地视频，屏保将循环播放（Beta功能，支持 mp4/webm/ogg/mov/mkv/avi 格式）</span>
+      </div>
+
+      <div class="source-panel" id="panel-videoUrl">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="label">视频URL</label>
+          <input type="text" id="customVideoUrlInput" class="input-control" placeholder="输入视频URL地址，例如 https://example.com/video.mp4">
+          <span class="label-secondary">输入视频URL地址，屏保将循环播放该视频（Beta功能）</span>
+        </div>
+      </div>
+
+      <div class="source-panel" id="panel-customApi">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="label">壁纸API地址</label>
+          <input type="text" id="customApiInput" class="input-control" placeholder="输入壁纸API地址，例如 https://api.example.com/wallpaper.php">
+          <span class="label-secondary">输入壁纸API地址，API需返回302跳转或直接返回图片。支持自动切换壁纸。</span>
+        </div>
+      </div>
     </div>
 
     <div class="section">
@@ -1201,6 +1574,12 @@
         <div class="checkbox" id="showClock"></div>
         <span class="checkbox-label">显示时钟</span>
       </div>
+
+      <div class="checkbox-container" id="enableVideoAudioContainer" style="margin-top: 16px; display: none;">
+        <div class="checkbox" id="enableVideoAudio"></div>
+        <span class="checkbox-label">播放视频声音</span>
+      </div>
+      <span class="label-secondary" id="enableVideoAudioHint" style="display: none; margin-top: 4px;">仅在使用本地视频或URL视频时生效</span>
 
       <div class="form-group" id="clockPositionGroup" style="margin-top: 16px;">
         <label class="label">时钟位置</label>
@@ -1246,6 +1625,7 @@
     <div class="button-group">
       <button class="btn btn-secondary" id="btnReset">重置默认</button>
       <button class="btn btn-secondary" style="flex: none; padding: 15px 32px;" id="btnPreview">预览屏保</button>
+      <button class="btn btn-secondary" style="flex: none; padding: 15px 32px;" id="btnAutostartTutorial">开机自启动教程</button>
     </div>
 
     <div class="save-indicator-container">
@@ -1270,6 +1650,45 @@
 
     <div class="footer">
       <p>Ruanftrix Screensaver | Designed by Ruan Mingze</p>
+      <p style="margin-top: 6px; font-size: 11px;">
+        <span>v1.0.8</span>
+        <span class="footer-sep">|</span>
+        <a href="#" id="btnChangelog" class="footer-link">更新日志</a>
+      </p>
+    </div>
+  </div>
+  </div>
+  </div>
+
+  <div class="modal-overlay" id="changelogModal">
+    <div class="modal" style="max-width: 540px;">
+      <div class="modal-title">更新日志</div>
+      <div class="modal-desc" id="changelogContent" style="max-height: 60vh; overflow-y: auto; padding-right: 8px;"></div>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-confirm" id="btnChangelogClose" type="button" style="width: 100%;">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="autostartTutorialModal">
+    <div class="modal" style="max-width: 520px;">
+      <div class="modal-title">开机自启动配置教程</div>
+      <div class="modal-desc">
+        <p style="margin-bottom: 12px;">通过修改注册表实现开机自启动：</p>
+        <ol style="margin-left: 20px; line-height: 1.8;">
+          <li>按 Win + R，输入 <code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">regedit</code> 打开注册表编辑器</li>
+          <li>定位到路径：<br><code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px; word-break: break-all; font-size: 12px;">HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run</code></li>
+          <li>在右侧空白处右键 → 新建 → 字符串值</li>
+          <li>名称填写：<code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px;">RuanftrixScreensaver</code></li>
+          <li>双击新建的项，数值数据填写（注意路径用双引号）：<br><code style="background: var(--bg-tertiary); padding: 2px 6px; border-radius: 4px; word-break: break-all; font-size: 12px;">"C:\Program Files\Ruanftrix-Screensaver\Ruanftrix-Screensaver.exe" --tray</code></li>
+          <li>点击确定完成</li>
+        </ol>
+        <p style="margin-top: 16px; color: var(--text-muted); font-size: 12px;">提示：将 exe 文件的实际安装路径替换到上面。便携版用户请填写便携版 exe 的完整路径。使用 <code style="background: var(--bg-tertiary); padding: 1px 4px; border-radius: 3px;">--tray</code> 参数后，程序会直接最小化到托盘，不会显示设置窗口。</p>
+        <p style="margin-top: 8px; color: var(--text-muted); font-size: 12px;">如需取消自启动，再次打开该注册表项并删除即可。</p>
+      </div>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-confirm" id="btnAutostartTutorialClose" type="button" style="width: 100%;">关闭</button>
+      </div>
     </div>
   </div>
 

@@ -24,6 +24,7 @@ let localImageList = [];
 let localImageIndex = 0;
 let multiUrlList = [];
 let multiUrlIndex = 0;
+let videoElement = null;
 
 function parseMultiUrls(text) {
   if (!text) return [];
@@ -71,39 +72,88 @@ function shuffleArray(arr) {
   return a;
 }
 
-function getNextWallpaperUrl() {
-  const source = settings.wallpaperSource || 'online';
-
-  if (source === 'url' && settings.customWallpaperUrl) {
-    return settings.customWallpaperUrl;
-  }
-
-  if (source === 'multiUrl') {
-    if (multiUrlList.length === 0) return getOnlineWallpaperUrl();
-    if (multiUrlList.length === 1) return multiUrlList[0];
-    multiUrlIndex = (multiUrlIndex + 1) % multiUrlList.length;
-    return multiUrlList[multiUrlIndex];
-  }
-
-  if (source === 'local' && settings.localWallpaperPath) {
-    return 'file:///' + settings.localWallpaperPath.replace(/\\/g, '/');
-  }
-
-  if (source === 'folder') {
-    const img = getNextLocalImage();
-    if (img) return 'file:///' + img.replace(/\\/g, '/');
-  }
-
-  return getOnlineWallpaperUrl();
-}
-
 function isFixedSource() {
   const source = settings.wallpaperSource || 'online';
   if (source === 'url') return true;
   if (source === 'local') return true;
+  if (source === 'video') return true;
+  if (source === 'videoUrl') return true;
   if (source === 'multiUrl' && multiUrlList.length <= 1) return true;
   if (source === 'folder' && localImageList.length <= 1) return true;
   return false;
+}
+
+function isVideoSource() {
+  const source = settings.wallpaperSource || 'online';
+  return source === 'video' || source === 'videoUrl';
+}
+
+function setupVideo() {
+  if (!videoElement) return;
+  const source = settings.wallpaperSource;
+  if (source !== 'video' && source !== 'videoUrl') {
+    stopVideo();
+    return;
+  }
+
+  let videoUrl = '';
+  if (source === 'video') {
+    if (!settings.localVideoPath) {
+      stopVideo();
+      return;
+    }
+    videoUrl = 'file:///' + settings.localVideoPath.replace(/\\/g, '/');
+  } else if (source === 'videoUrl') {
+    if (!settings.customVideoUrl) {
+      stopVideo();
+      return;
+    }
+    videoUrl = settings.customVideoUrl;
+  }
+
+  if (videoElement.dataset.src === videoUrl) {
+    return;
+  }
+  videoElement.dataset.src = videoUrl;
+  videoElement.src = videoUrl;
+  videoElement.loop = true;
+  videoElement.muted = settings.enableVideoAudio !== true;
+  videoElement.volume = 1;
+  videoElement.controls = false;
+  videoElement.disablePictureInPicture = true;
+  videoElement.setAttribute('controlsList', 'nodownload nofullscreen noremoteplayback');
+  const playPromise = videoElement.play();
+  if (playPromise && typeof playPromise.catch === 'function') {
+    playPromise.catch(() => {});
+  }
+  hideWallpaperLayers();
+  videoElement.classList.add('active');
+  const loadingIndicator = document.getElementById('loading-indicator');
+  if (loadingIndicator) loadingIndicator.classList.remove('visible');
+}
+
+function stopVideo() {
+  if (!videoElement) return;
+  try {
+    videoElement.pause();
+  } catch (e) {}
+  videoElement.removeAttribute('src');
+  videoElement.load();
+  videoElement.dataset.src = '';
+  videoElement.classList.remove('active');
+}
+
+function hideWallpaperLayers() {
+  const wp1 = document.getElementById('wallpaper1');
+  const wp2 = document.getElementById('wallpaper2');
+  if (wp1) {
+    wp1.classList.remove('active');
+    wp1.style.backgroundImage = '';
+  }
+  if (wp2) {
+    wp2.classList.remove('active');
+    wp2.style.backgroundImage = '';
+  }
 }
 
 function preloadImage(url, callback) {
@@ -117,6 +167,13 @@ function preloadImage(url, callback) {
 function updateWallpaper() {
   const loadingIndicator = document.getElementById('loading-indicator');
   if (!loadingIndicator) return;
+
+  if (isVideoSource()) {
+    setupVideo();
+    return;
+  }
+
+  stopVideo();
 
   loadingIndicator.classList.add('visible');
 
@@ -281,7 +338,47 @@ async function applySettings(newSettings) {
   }, 1500);
 }
 
+function getNextWallpaperUrl() {
+  const source = settings.wallpaperSource || 'online';
+
+  if (source === 'url' && settings.customWallpaperUrl) {
+    return settings.customWallpaperUrl;
+  }
+
+  if (source === 'customApi' && settings.customApiUrl) {
+    let url = settings.customApiUrl;
+    if (!url.includes('?')) {
+      url += '?t=' + Date.now();
+    } else {
+      url += '&t=' + Date.now();
+    }
+    return url;
+  }
+
+  if (source === 'multiUrl') {
+    if (multiUrlList.length === 0) return getOnlineWallpaperUrl();
+    if (multiUrlList.length === 1) return multiUrlList[0];
+    multiUrlIndex = (multiUrlIndex + 1) % multiUrlList.length;
+    return multiUrlList[multiUrlIndex];
+  }
+
+  if (source === 'local' && settings.localWallpaperPath) {
+    return 'file:///' + settings.localWallpaperPath.replace(/\\/g, '/');
+  }
+
+  if (source === 'folder') {
+    const img = getNextLocalImage();
+    if (img) return 'file:///' + img.replace(/\\/g, '/');
+  }
+
+  return getOnlineWallpaperUrl();
+}
+
 async function init() {
+  videoElement = document.getElementById('videoPlayer');
+  if (videoElement) {
+    videoElement.addEventListener('contextmenu', (e) => e.preventDefault());
+  }
   try {
     settings = ipcRenderer.sendSync('get-settings');
   } catch (e) {
@@ -292,8 +389,12 @@ async function init() {
       autoSwitchWallpaper: true,
       customWallpaperUrl: '',
       customWallpaperUrls: '',
+      customApiUrl: '',
       localWallpaperPath: '',
       localFolderPath: '',
+      localVideoPath: '',
+      customVideoUrl: '',
+      enableVideoAudio: false,
       showClock: true,
       showSeconds: false,
       clockPosition: 'bottom-left',

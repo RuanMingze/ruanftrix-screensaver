@@ -4,9 +4,14 @@ const fs = require('fs');
 
 const isDev = process.argv.includes('--dev') || process.env.RUANFTRIX_DEV === '1';
 const isDebug = isDev || process.argv.includes('--debug') || process.env.RUANFTRIX_DEBUG === '1';
+const startToTray = process.argv.includes('--tray');
+const forceWin = process.argv.includes('--win');
+const forceMac = process.argv.includes('--macos') || process.argv.includes('--mac');
+const forceLinux = process.argv.includes('--linux');
+const forcePlatform = forceWin ? 'win32' : forceMac ? 'darwin' : forceLinux ? 'linux' : null;
 
 console.log('[启动] 命令行参数:', process.argv.join(' '));
-console.log(`[启动] Ruanftrix 屏保已启动 | 开发模式: ${isDev ? '开启' : '关闭'} | 调试模式: ${isDebug ? '开启' : '关闭'}`);
+  console.log(`[启动] Ruanftrix 屏保已启动 | 平台: ${process.platform}${forcePlatform ? ` (已强制为: ${forcePlatform})` : ''} | 开发模式: ${isDev ? '开启' : '关闭'} | 调试模式: ${isDebug ? '开启' : '关闭'} | 托盘启动: ${startToTray ? '开启' : '关闭'}`);
 
 if (process.platform === 'win32') {
   app.commandLine.appendSwitch('high-dpi-support', 'true');
@@ -31,8 +36,12 @@ const defaultSettings = {
   autoSwitchWallpaper: true,
   customWallpaperUrl: '',
   customWallpaperUrls: '',
+  customApiUrl: '',
   localWallpaperPath: '',
   localFolderPath: '',
+  localVideoPath: '',
+  customVideoUrl: '',
+  enableVideoAudio: false,
   showClock: true,
   showSeconds: false,
   showEffects: true,
@@ -81,9 +90,21 @@ function createTray() {
   });
 }
 
+function toggleEntertainmentMode() {
+  isEntertainmentMode = !isEntertainmentMode;
+  resetIdleTimer();
+  updateTrayMenu();
+  if (isEntertainmentMode && screensaverWindow) {
+    hideScreensaver();
+  }
+  if (settingsWindow && !settingsWindow.isDestroyed()) {
+    settingsWindow.webContents.send('entertainment-mode-changed', isEntertainmentMode);
+  }
+}
+
 function updateTrayMenu() {
   if (!tray) return;
-  
+
   const contextMenu = Menu.buildFromTemplate([
     {
       label: '打开设置',
@@ -99,19 +120,12 @@ function updateTrayMenu() {
         }
       }
     },
-    { type: 'separator' },
     {
       label: isEntertainmentMode ? '关闭娱乐模式' : '开启娱乐模式',
       click: () => {
-        isEntertainmentMode = !isEntertainmentMode;
-        resetIdleTimer();
-        updateTrayMenu();
-        if (isEntertainmentMode && screensaverWindow) {
-          hideScreensaver();
-        }
+        toggleEntertainmentMode();
       }
     },
-    { type: 'separator' },
     {
       label: '立即显示屏保',
       click: () => {
@@ -120,7 +134,6 @@ function updateTrayMenu() {
         }
       }
     },
-    { type: 'separator' },
     {
       label: '退出',
       click: () => {
@@ -134,13 +147,18 @@ function updateTrayMenu() {
 }
 
 function createSettingsWindow() {
+  const effectivePlatform = forcePlatform || process.platform;
+  const isMac = effectivePlatform === 'darwin';
+  const isLinux = effectivePlatform === 'linux';
   settingsWindow = new BrowserWindow({
     width: 600,
     height: 760,
     resizable: false,
     frame: false,
+    titleBarStyle: isMac ? 'hiddenInset' : 'default',
     title: 'Ruanftrix 屏保设置',
     icon: path.join(__dirname, 'assets', 'app-icon.ico'),
+    show: !startToTray,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
@@ -149,9 +167,53 @@ function createSettingsWindow() {
     }
   });
 
+  settingsWindow.webContents.on('did-finish-load', () => {
+    settingsWindow.webContents.send('platform-info', { platform: effectivePlatform, isMac, isLinux, forced: !!forcePlatform });
+  });
+
   settingsWindow.loadFile(path.join(__dirname, 'settings.html'));
   settingsWindow.setMenuBarVisibility(false);
-  
+
+  // macOS 系统菜单栏
+  if (isMac) {
+    const macMenu = Menu.buildFromTemplate([
+      {
+        label: 'Ruanftrix',
+        submenu: [
+          { label: '关于 Ruanftrix 屏保', role: 'about' },
+          { type: 'separator' },
+          { label: '隐藏 Ruanftrix', role: 'hide' },
+          { label: '隐藏其他', role: 'hideOthers' },
+          { label: '显示全部', role: 'unhide' },
+          { type: 'separator' },
+          { label: '退出 Ruanftrix 屏保', role: 'quit' }
+        ]
+      },
+      {
+        label: '编辑',
+        submenu: [
+          { label: '撤销', role: 'undo' },
+          { label: '重做', role: 'redo' },
+          { type: 'separator' },
+          { label: '剪切', role: 'cut' },
+          { label: '复制', role: 'copy' },
+          { label: '粘贴', role: 'paste' },
+          { label: '全选', role: 'selectAll' }
+        ]
+      },
+      {
+        label: '窗口',
+        submenu: [
+          { label: '最小化', role: 'minimize' },
+          { label: '关闭', role: 'close' }
+        ]
+      }
+    ]);
+    Menu.setApplicationMenu(macMenu);
+  } else {
+    Menu.setApplicationMenu(null);
+  }
+
   if (isDev) {
     settingsWindow.webContents.openDevTools();
   }
@@ -162,7 +224,7 @@ function createSettingsWindow() {
       settingsWindow.hide();
     }
   });
-  
+
   settingsWindow.on('closed', () => {
     settingsWindow = null;
   });
@@ -377,9 +439,17 @@ app.whenReady().then(() => {
   ipcMain.on('reset-idle', () => {
     resetIdleTimer();
   });
-  
+
   ipcMain.on('user-activity', () => {
     resetIdleTimer();
+  });
+
+  ipcMain.on('toggle-entertainment-mode', () => {
+    toggleEntertainmentMode();
+  });
+
+  ipcMain.on('get-entertainment-mode', (event) => {
+    event.returnValue = isEntertainmentMode;
   });
 
   ipcMain.on('window-minimize', () => {
@@ -433,6 +503,37 @@ app.whenReady().then(() => {
     });
     if (result.canceled || result.filePaths.length === 0) return null;
     return result.filePaths[0];
+  });
+
+  ipcMain.handle('select-local-video', async () => {
+    const result = await dialog.showOpenDialog(settingsWindow, {
+      title: '选择本地视频',
+      properties: ['openFile'],
+      filters: [
+        { name: '视频文件', extensions: ['mp4', 'webm', 'ogg', 'mov', 'mkv', 'avi'] }
+      ]
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
+    return result.filePaths[0];
+  });
+
+  ipcMain.handle('read-changelog', async () => {
+    try {
+      const candidates = [
+        path.join(__dirname, 'CHANGELOG.md'),
+        path.join(process.resourcesPath, 'CHANGELOG.md'),
+        path.join(app.getAppPath(), 'CHANGELOG.md')
+      ];
+      for (const p of candidates) {
+        if (fs.existsSync(p)) {
+          const content = fs.readFileSync(p, 'utf-8');
+          return { success: true, content };
+        }
+      }
+      return { success: false, error: 'CHANGELOG.md not found' };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
   });
 
   ipcMain.handle('scan-folder-images', async (event, folderPath) => {

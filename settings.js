@@ -55,8 +55,12 @@ function loadSettings() {
       autoSwitchWallpaper: true,
       customWallpaperUrl: '',
       customWallpaperUrls: '',
+      customApiUrl: '',
       localWallpaperPath: '',
       localFolderPath: '',
+      localVideoPath: '',
+      customVideoUrl: '',
+      enableVideoAudio: false,
       showClock: true,
       showSeconds: false,
       showEffects: true,
@@ -104,6 +108,10 @@ function updateUI() {
   if (currentSettings.customWallpaperUrls) {
     document.getElementById('multiUrlInput').value = currentSettings.customWallpaperUrls;
   }
+  if (currentSettings.customApiUrl) {
+    const customApiInput = document.getElementById('customApiInput');
+    if (customApiInput) customApiInput.value = currentSettings.customApiUrl;
+  }
   if (currentSettings.localWallpaperPath) {
     const infoEl = document.getElementById('localFileInfo');
     infoEl.textContent = currentSettings.localWallpaperPath;
@@ -116,6 +124,18 @@ function updateUI() {
     infoEl.title = currentSettings.localFolderPath;
     infoEl.dataset.path = currentSettings.localFolderPath;
   }
+  if (currentSettings.localVideoPath) {
+    const infoEl = document.getElementById('localVideoInfo');
+    if (infoEl) {
+      infoEl.textContent = currentSettings.localVideoPath;
+      infoEl.title = currentSettings.localVideoPath;
+      infoEl.dataset.path = currentSettings.localVideoPath;
+    }
+  }
+  if (currentSettings.customVideoUrl) {
+    const customVideoUrlInput = document.getElementById('customVideoUrlInput');
+    if (customVideoUrlInput) customVideoUrlInput.value = currentSettings.customVideoUrl;
+  }
 
   document.getElementById('imageInterval').value = currentSettings.imageInterval;
 
@@ -126,6 +146,8 @@ function updateUI() {
   document.getElementById('showClock').classList.toggle('checked', currentSettings.showClock);
   document.getElementById('showSeconds').classList.toggle('checked', currentSettings.showSeconds);
   document.getElementById('showEffects').classList.toggle('checked', currentSettings.showEffects);
+  document.getElementById('enableVideoAudio').classList.toggle('checked', currentSettings.enableVideoAudio === true);
+  updateVideoAudioVisibility(source);
 
   document.getElementById('clockPosition').value = currentSettings.clockPosition || 'bottom-left';
   document.getElementById('clockFont').value = currentSettings.clockFont || 'Comic Sans MS';
@@ -146,11 +168,20 @@ function switchSourcePanel(source) {
   const panel = document.getElementById('panel-' + source);
   if (panel) panel.style.display = 'block';
 
-  const isFixed = source === 'url' || source === 'local';
+  const isFixed = source === 'url' || source === 'local' || source === 'video' || source === 'videoUrl';
   const autoSwitchContainer = document.getElementById('autoSwitchContainer');
   const imageIntervalGroup = document.getElementById('imageIntervalGroup');
   if (autoSwitchContainer) autoSwitchContainer.style.display = isFixed ? 'none' : '';
   if (imageIntervalGroup) imageIntervalGroup.style.display = isFixed ? 'none' : '';
+  updateVideoAudioVisibility(source);
+}
+
+function updateVideoAudioVisibility(source) {
+  const container = document.getElementById('enableVideoAudioContainer');
+  const hint = document.getElementById('enableVideoAudioHint');
+  const isVideo = source === 'video' || source === 'videoUrl';
+  if (container) container.style.display = isVideo ? 'flex' : 'none';
+  if (hint) hint.style.display = isVideo ? 'block' : 'none';
 }
 
 function updateAutoSwitchGroupState() {
@@ -191,6 +222,9 @@ function getCurrentFormData() {
     if (!isNaN(parsed)) idleMinutes = parsed;
   }
 
+  const customApiInput = document.getElementById('customApiInput');
+  const customApiUrl = customApiInput ? customApiInput.value.trim() : '';
+
   return {
     idleMinutes: idleMinutes,
     wallpaperSource: document.querySelector('.source-tab.active')?.dataset.source || 'online',
@@ -199,8 +233,12 @@ function getCurrentFormData() {
     autoSwitchWallpaper: document.getElementById('autoSwitch').classList.contains('checked'),
     customWallpaperUrl: document.getElementById('customUrlInput').value.trim(),
     customWallpaperUrls: document.getElementById('multiUrlInput').value.trim(),
+    customApiUrl: customApiUrl,
     localWallpaperPath: document.getElementById('localFileInfo').dataset.path || '',
     localFolderPath: document.getElementById('localFolderInfo').dataset.path || '',
+    localVideoPath: document.getElementById('localVideoInfo')?.dataset.path || '',
+    customVideoUrl: document.getElementById('customVideoUrlInput')?.value.trim() || '',
+    enableVideoAudio: document.getElementById('enableVideoAudio')?.classList.contains('checked') || false,
     showClock: document.getElementById('showClock').classList.contains('checked'),
     showSeconds: document.getElementById('showSeconds').classList.contains('checked'),
     showEffects: document.getElementById('showEffects').classList.contains('checked'),
@@ -226,8 +264,13 @@ function resetToDefault() {
     imageInterval: 30,
     autoSwitchWallpaper: true,
     customWallpaperUrl: '',
+    customWallpaperUrls: '',
+    customApiUrl: '',
     localWallpaperPath: '',
     localFolderPath: '',
+    localVideoPath: '',
+    customVideoUrl: '',
+    enableVideoAudio: false,
     showClock: true,
     showSeconds: false,
     showEffects: true,
@@ -241,8 +284,17 @@ function resetToDefault() {
   document.getElementById('localFileInfo').removeAttribute('data-path');
   document.getElementById('localFolderInfo').textContent = '未选择文件夹';
   document.getElementById('localFolderInfo').removeAttribute('data-path');
+  const localVideoInfo = document.getElementById('localVideoInfo');
+  if (localVideoInfo) {
+    localVideoInfo.textContent = '未选择视频';
+    localVideoInfo.removeAttribute('data-path');
+  }
   document.getElementById('customUrlInput').value = '';
   document.getElementById('multiUrlInput').value = '';
+  const customApiInput = document.getElementById('customApiInput');
+  if (customApiInput) customApiInput.value = '';
+  const customVideoUrlInput = document.getElementById('customVideoUrlInput');
+  if (customVideoUrlInput) customVideoUrlInput.value = '';
   updateUI();
   onSettingsChanged();
 }
@@ -280,8 +332,166 @@ function updatePreviewButton() {
   }
 }
 
+const CHANGELOG_FALLBACK = [
+  {
+    version: 'v1.0.8',
+    date: '2026-07-09',
+    items: [
+      '【新增】自定义网络壁纸API、本地视频/URL视频（Beta）、视频声音开关、娱乐模式一键开关、开机自启动教程',
+      '【优化】设置窗口固定大小、滚动条位置、跨平台标题栏（Windows/macOS/Linux）、macOS 系统菜单栏',
+      '【调试】新增 --win/--macos/--linux 命令行参数',
+      '【求助】开发者无 MacBook，macOS 菜单栏需要 Mac 用户协助测试',
+      '【系统支持】1.0.8 暂时只提供 Windows 安装包（NSIS + 便携版），macOS/Linux 代码已就绪但暂无法直接发布',
+      '【反馈】用户反馈了娱乐模式一键开关、滚动条上边距、Poftorix 边缘拖动诡异等多项改进'
+    ]
+  },
+  {
+    version: 'v1.0.1',
+    date: '2026-07-09',
+    items: [
+      '切换网络壁纸API为 wp.upx8.com',
+      '新增壁纸分类：动物、城市、宇宙、汽车、美女、运动',
+      '更新分类图标和名称'
+    ]
+  },
+  {
+    version: 'v1.0.0',
+    date: '2026-07-04',
+    items: [
+      '多种壁纸来源：网络壁纸、自定义URL、多张URL、本地单图、本地文件夹',
+      '自动切换壁纸，可自定义切换间隔',
+      '两种退出方式：仅手动关闭 / 任意动作退出',
+      '实时时钟显示，可选位置和字体',
+      '视觉特效：淡入淡出过渡效果',
+      '娱乐模式：暂停屏保计时',
+      '预览窗口：实时预览屏保效果',
+      '深色主题界面'
+    ]
+  }
+];
+
+function parseChangelogMarkdown(md) {
+  const lines = md.split(/\r?\n/);
+  const entries = [];
+  let current = null;
+  let inItems = false;
+  const itemRegex = /^[ \t]*[-*]\s+(.+)$/;
+  const versionHeaderRegex = /^##\s+(v?\d+\.\d+\.\d+)\s*\(?(\d{4}-\d{2}-\d{2})?\)?/;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('# ')) {
+      continue;
+    }
+
+    const m = trimmed.match(versionHeaderRegex);
+    if (m) {
+      if (current) entries.push(current);
+      current = { version: m[1], date: m[2] || '', items: [] };
+      inItems = true;
+      continue;
+    }
+
+    if (current && inItems) {
+      if (trimmed === '' || trimmed.startsWith('### ')) {
+        if (trimmed.startsWith('### ')) {
+          continue;
+        }
+        continue;
+      }
+      const itemMatch = trimmed.match(itemRegex);
+      if (itemMatch) {
+        current.items.push(itemMatch[1].trim());
+      }
+    }
+  }
+  if (current) entries.push(current);
+  return entries;
+}
+
+async function loadChangelog() {
+  try {
+    const result = await ipcRenderer.invoke('read-changelog');
+    if (result && result.success && result.content) {
+      const parsed = parseChangelogMarkdown(result.content);
+      if (parsed.length > 0) return parsed;
+    }
+  } catch (e) {
+    console.warn('加载 CHANGELOG.md 失败，使用内置数据:', e);
+  }
+  return CHANGELOG_FALLBACK;
+}
+
+function escapeHtml(s) {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function showChangelog() {
+  const content = document.getElementById('changelogContent');
+  if (!content) return;
+  content.innerHTML = '<div style="text-align:center; color: var(--text-muted); padding: 20px;">加载中...</div>';
+  const modal = document.getElementById('changelogModal');
+  if (modal) modal.classList.add('visible');
+
+  loadChangelog().then(entries => {
+    content.innerHTML = entries.map(entry => `
+      <div class="changelog-entry">
+        <div class="changelog-header">
+          <span class="changelog-version">${escapeHtml(entry.version)}</span>
+          <span class="changelog-date">${escapeHtml(entry.date || '')}</span>
+        </div>
+        <ul class="changelog-list">
+          ${entry.items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+        </ul>
+      </div>
+    `).join('');
+  });
+}
+
+function updateEntertainmentUI(isActive) {
+  const btn = document.getElementById('btnEntertainmentMode');
+  const btnText = document.getElementById('entertainmentBtnText');
+  const status = document.getElementById('entertainmentStatus');
+  if (isActive) {
+    btn.classList.add('active');
+    btnText.textContent = '关闭娱乐模式';
+    status.style.display = 'flex';
+  } else {
+    btn.classList.remove('active');
+    btnText.textContent = '开启娱乐模式';
+    status.style.display = 'none';
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   loadSettings();
+
+  // 初始化娱乐模式状态
+  try {
+    const isEntertainment = ipcRenderer.sendSync('get-entertainment-mode');
+    updateEntertainmentUI(isEntertainment);
+  } catch (e) {}
+
+  ipcRenderer.on('entertainment-mode-changed', (event, isEntertainment) => {
+    updateEntertainmentUI(isEntertainment);
+  });
+
+  // 平台信息（macOS / Linux 自定义标题栏显示对应按钮）
+  ipcRenderer.on('platform-info', (event, info) => {
+    try {
+      if (info && info.isMac) {
+        document.body.classList.add('platform-mac');
+      } else if (info && info.isLinux) {
+        document.body.classList.add('platform-linux');
+      }
+    } catch (e) {}
+  });
   
   const reportActivity = () => {
     try {
@@ -299,12 +509,52 @@ document.addEventListener('DOMContentLoaded', () => {
       ipcRenderer.send('window-minimize');
     } catch (e) {}
   });
+
+  // 双击标题栏图标最小化到托盘
+  const titlebarIcon = document.getElementById('titlebarIcon');
+  if (titlebarIcon) {
+    let lastClickTime = 0;
+    let clickCount = 0;
+    titlebarIcon.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const now = Date.now();
+      if (now - lastClickTime > 400) {
+        clickCount = 0;
+      }
+      clickCount++;
+      lastClickTime = now;
+      if (clickCount >= 2) {
+        clickCount = 0;
+        try {
+          ipcRenderer.send('window-hide');
+        } catch (err) {}
+      }
+    });
+  }
   
   document.getElementById('btnTitlebarClose').addEventListener('click', () => {
     try {
       ipcRenderer.send('window-hide');
     } catch (e) {}
   });
+
+  // macOS 红绿灯按钮
+  const macClose = document.getElementById('macClose');
+  const macMinimize = document.getElementById('macMinimize');
+  const macMaximize = document.getElementById('macMaximize');
+  if (macClose) macClose.addEventListener('click', () => { try { ipcRenderer.send('window-hide'); } catch (e) {} });
+  if (macMinimize) macMinimize.addEventListener('click', () => { try { ipcRenderer.send('window-minimize'); } catch (e) {} });
+  if (macMaximize) macMaximize.addEventListener('click', () => { try { ipcRenderer.send('window-hide'); } catch (e) {} });
+
+  // Linux 系统按钮
+  const linuxClose = document.getElementById('linuxClose');
+  const linuxMinimize = document.getElementById('linuxMinimize');
+  const linuxMaximize = document.getElementById('linuxMaximize');
+  if (linuxClose) linuxClose.addEventListener('click', () => { try { ipcRenderer.send('window-hide'); } catch (e) {} });
+  if (linuxMinimize) linuxMinimize.addEventListener('click', () => { try { ipcRenderer.send('window-minimize'); } catch (e) {} });
+  if (linuxMaximize) linuxMaximize.addEventListener('click', () => { try { ipcRenderer.send('window-hide'); } catch (e) {} });
   
   document.getElementById('idleMinutes').addEventListener('input', (e) => {
     // 拖动进度条时清除自定义值标记
@@ -334,6 +584,22 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('multiUrlInput').addEventListener('input', () => {
     onSettingsChanged();
   });
+
+  // 自定义API输入
+  const customApiInput = document.getElementById('customApiInput');
+  if (customApiInput) {
+    customApiInput.addEventListener('input', () => {
+      onSettingsChanged();
+    });
+  }
+
+  // 自定义视频URL输入
+  const customVideoUrlInput = document.getElementById('customVideoUrlInput');
+  if (customVideoUrlInput) {
+    customVideoUrlInput.addEventListener('input', () => {
+      onSettingsChanged();
+    });
+  }
 
   // 选择本地文件
   document.getElementById('btnSelectLocalFile').addEventListener('click', async () => {
@@ -367,12 +633,61 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  // 选择本地视频
+  const btnSelectLocalVideo = document.getElementById('btnSelectLocalVideo');
+  if (btnSelectLocalVideo) {
+    btnSelectLocalVideo.addEventListener('click', async () => {
+      try {
+        const filePath = await ipcRenderer.invoke('select-local-video');
+        if (filePath) {
+          const infoEl = document.getElementById('localVideoInfo');
+          infoEl.textContent = filePath;
+          infoEl.title = filePath;
+          infoEl.dataset.path = filePath;
+          onSettingsChanged();
+        }
+      } catch (e) {
+        console.error('选择本地视频失败:', e);
+      }
+    });
+  }
+
   // 自动切换壁纸开关
   document.getElementById('autoSwitchContainer').addEventListener('click', () => {
     document.getElementById('autoSwitch').classList.toggle('checked');
     updateAutoSwitchGroupState();
     onSettingsChanged();
   });
+
+  // 视频声音开关
+  const enableVideoAudioContainer = document.getElementById('enableVideoAudioContainer');
+  if (enableVideoAudioContainer) {
+    enableVideoAudioContainer.addEventListener('click', () => {
+      document.getElementById('enableVideoAudio').classList.toggle('checked');
+      onSettingsChanged();
+    });
+  }
+
+  // 更新日志弹窗
+  const btnChangelog = document.getElementById('btnChangelog');
+  const changelogModal = document.getElementById('changelogModal');
+  const btnChangelogClose = document.getElementById('btnChangelogClose');
+  if (btnChangelog && changelogModal) {
+    btnChangelog.addEventListener('click', (e) => {
+      e.preventDefault();
+      showChangelog();
+    });
+    if (btnChangelogClose) {
+      btnChangelogClose.addEventListener('click', () => {
+        changelogModal.classList.remove('visible');
+      });
+    }
+    changelogModal.addEventListener('click', (e) => {
+      if (e.target === changelogModal) {
+        changelogModal.classList.remove('visible');
+      }
+    });
+  }
 
   // 自定义切换间隔输入
   document.getElementById('imageInterval').addEventListener('input', (e) => {
@@ -532,7 +847,30 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnReset').addEventListener('click', resetToDefault);
   
   document.getElementById('btnPreview').addEventListener('click', previewScreensaver);
-  
+
+  // 开机自启动教程按钮
+  const autostartTutorialModal = document.getElementById('autostartTutorialModal');
+  document.getElementById('btnAutostartTutorial').addEventListener('click', () => {
+    autostartTutorialModal.classList.add('visible');
+  });
+  document.getElementById('btnAutostartTutorialClose').addEventListener('click', () => {
+    autostartTutorialModal.classList.remove('visible');
+  });
+  autostartTutorialModal.addEventListener('click', (e) => {
+    if (e.target === autostartTutorialModal) {
+      autostartTutorialModal.classList.remove('visible');
+    }
+  });
+
+  // 娱乐模式按钮
+  document.getElementById('btnEntertainmentMode').addEventListener('click', () => {
+    try {
+      ipcRenderer.send('toggle-entertainment-mode');
+    } catch (e) {
+      console.error('切换娱乐模式失败:', e);
+    }
+  });
+
   ipcRenderer.on('preview-closed', () => {
     isPreviewOpen = false;
     updatePreviewButton();
