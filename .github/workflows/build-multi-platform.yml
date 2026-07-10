@@ -3,6 +3,9 @@ name: 构建多平台安装包
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     name: 构建 ${{ matrix.os }}
@@ -120,3 +123,34 @@ jobs:
             release/*.snap
             release/*.zip
             release/*.yml
+
+      # ============== 自动追加到 v1.0.8 Release ==============
+      - name: 追加 macOS 文件到 v1.0.8 Release
+        if: matrix.os == 'macos-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "查找 release 目录中的 macOS 文件..."
+          ls -la release/
+          echo ""
+          echo "上传到 v1.0.8 Release..."
+          gh release upload v1.0.8 release/*.dmg release/*.zip release/*.yml --clobber 2>&1 || \
+            gh release upload v1.0.8 release/*.dmg release/*.zip release/*.yml 2>&1
+          echo ""
+          echo "上传完成，查看 v1.0.8 Release 当前文件列表："
+          gh release view v1.0.8 --json assets --jq '.assets[] | {name: .name, size: .size}'
+
+      - name: 追加 Linux 文件到 v1.0.8 Release
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "查找 release 目录中的 Linux 文件..."
+          ls -la release/
+          echo ""
+          echo "上传到 v1.0.8 Release..."
+          gh release upload v1.0.8 release/*.AppImage release/*.deb release/*.snap release/*.zip release/*.yml --clobber 2>&1 || \
+            gh release upload v1.0.8 release/*.AppImage release/*.deb release/*.snap release/*.zip release/*.yml 2>&1
+          echo ""
+          echo "上传完成，查看 v1.0.8 Release 当前文件列表："
+          gh release view v1.0.8 --json assets --jq '.assets[] | {name: .name, size: .size}'

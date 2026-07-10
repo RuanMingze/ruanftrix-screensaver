@@ -18,3 +18,4 @@ Thumbs.db
 *.sw?
 .env
 .env.local
+release-body.md
