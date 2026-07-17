@@ -321,11 +321,24 @@ function createScreensaverWindow() {
     alwaysOnTop: true,
     skipTaskbar: true,
     kiosk: true,
+    // 双重保险：Windows 上 kiosk 模式 + transparent 可能让右上角出现 resize 光标
+    // 显式禁用 resizable 并把 min/max 锁死，叠加 will-resize 拦截，彻底杜绝缩放
+    resizable: false,
+    minWidth: primaryDisplay.size.width,
+    minHeight: primaryDisplay.size.height,
+    maxWidth: primaryDisplay.size.width,
+    maxHeight: primaryDisplay.size.height,
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
+      enableRemoteModule: true,
       zoomFactor: screen.getPrimaryDisplay().scaleFactor
     }
+  });
+
+  // 拦截 will-resize：Windows 边缘仍可能出现 resize 光标，这里直接阻止事件
+  screensaverWindow.on('will-resize', (event) => {
+    event.preventDefault();
   });
 
   screensaverWindow.loadFile(path.join(__dirname, 'screensaver.html'));
