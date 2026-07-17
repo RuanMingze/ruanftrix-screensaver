@@ -233,6 +233,40 @@
       margin-top: 6px;
     }
 
+    .shortcut-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .shortcut-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .shortcut-desc {
+      font-size: 13px;
+      color: var(--text-primary);
+      margin-left: 4px;
+    }
+
+    .kbd {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-bottom-width: 2px;
+      border-radius: 6px;
+      padding: 2px 10px;
+      font-family: 'Consolas', 'Monaco', monospace;
+      font-size: 12px;
+      color: var(--text-primary);
+      min-width: 26px;
+      text-align: center;
+      line-height: 1.4;
+    }
+
     .hint-burnin {
       font-size: 12px;
       line-height: 1.6;
@@ -1278,6 +1312,31 @@
         <span class="label-secondary">仅手动关闭：只能点击右上角关闭按钮退出；任意动作退出：移动鼠标或按键即退出</span>
       </div>
 
+      <div class="form-group">
+        <label class="label">快捷键</label>
+        <div class="shortcut-list">
+          <div class="shortcut-row">
+            <span class="kbd">Esc</span>
+            <span style="color: var(--text-muted); font-size: 12px;">/</span>
+            <span class="kbd">C</span>
+            <span class="shortcut-desc">退出屏保</span>
+          </div>
+          <div class="shortcut-row">
+            <span class="kbd">S</span>
+            <span class="shortcut-desc">切换到下一张壁纸（仅支持自动切换的来源）</span>
+          </div>
+        </div>
+        <span class="label-secondary">屏保运行时不显示快捷键提示，请牢记</span>
+      </div>
+
+      <div class="form-group" id="hideCursorGroup" style="display: none;">
+        <div class="checkbox-container" id="hideCursorContainer">
+          <div class="checkbox" id="hideCursor"></div>
+          <span class="checkbox-label">隐藏鼠标指针</span>
+        </div>
+        <span class="label-secondary">启用后屏保运行时不显示鼠标指针</span>
+      </div>
+
       <div class="form-group" style="margin-bottom: 0;">
         <label class="label">娱乐模式</label>
         <button class="entertainment-btn" id="btnEntertainmentMode" type="button">
@@ -1299,7 +1358,11 @@
         <span class="title-line"></span>
         <span>壁纸来源</span>
       </div>
-      
+
+      <div class="hint-burnin" id="burnInHint" style="display: none; margin-bottom: 16px;">
+        <span class="hint-burnin-text"></span>
+      </div>
+
       <div class="source-tabs">
         <div class="source-tab active" data-source="online">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1576,9 +1639,11 @@
         <span class="checkbox-label">自动切换壁纸</span>
       </div>
 
-      <div class="hint-burnin" id="burnInHint" style="display: none; margin-top: 8px;">
-        <span class="hint-burnin-text"></span>
+      <div class="checkbox-container" id="showLoadingIndicatorContainer" style="margin-top: 16px;">
+        <div class="checkbox checked" id="showLoadingIndicator"></div>
+        <span class="checkbox-label">显示加载提示</span>
       </div>
+      <span class="label-secondary">关闭后，屏保加载壁纸时不再显示旋转图标与"正在加载壁纸"文字</span>
 
       <div class="form-group" id="imageIntervalGroup" style="margin-top: 16px;">
         <label class="label">切换间隔</label>

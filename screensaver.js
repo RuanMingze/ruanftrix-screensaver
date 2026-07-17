@@ -46,6 +46,8 @@ let localImageIndex = 0;
 let multiUrlList = [];
 let multiUrlIndex = 0;
 let videoElement = null;
+// 隐藏鼠标相关状态：仅在"任意动作退出"模式下可用
+let isCursorHidden = false;
 
 function parseMultiUrls(text) {
   if (!text) return [];
@@ -73,7 +75,9 @@ function loadSettings() {
       showClock: true,
       showSeconds: false,
       showEffects: true,
+      showLoadingIndicator: true,
       exitMode: 'manual',
+      hideCursor: false,
       clockPosition: 'bottom-left',
       clockFont: 'Comic Sans MS'
     };
@@ -264,7 +268,10 @@ function updateWallpaper() {
 
   stopVideo();
 
-  loadingIndicator.classList.add('visible');
+  // 根据用户设置决定是否显示加载提示（避免旋转图标在切图瞬间显得突兀）
+  if (settings.showLoadingIndicator !== false) {
+    loadingIndicator.classList.add('visible');
+  }
 
   const url = getNextWallpaperUrl();
 
@@ -555,6 +562,16 @@ function updateButtonVisibility() {
   if (switchBtn) switchBtn.style.display = (isActivity || fixed) ? 'none' : 'flex';
 }
 
+// 根据设置初始化鼠标隐藏状态：仅在"任意动作退出"模式 + 开启隐藏鼠标开关时生效
+function applyHideCursorSetting() {
+  isCursorHidden = settings.exitMode === 'activity' && settings.hideCursor === true;
+  if (isCursorHidden) {
+    document.body.classList.add('cursor-hidden');
+  } else {
+    document.body.classList.remove('cursor-hidden');
+  }
+}
+
 function exitScreensaver() {
   stopImageRotation();
   stopClock();
@@ -573,9 +590,16 @@ function handleActivity() {
 }
 
 function handleKeydown(e) {
-  if (e.key === 'Escape') {
+  // 屏保快捷键：Esc 退出，C 退出屏保，S 切换壁纸
+  // 提示：用户不会在屏保页面上看到快捷键说明，需要在设置页告知
+  if (e.key === 'Escape' || e.key === 'c' || e.key === 'C') {
     e.preventDefault();
     exitScreensaver();
+    return;
+  }
+  if (e.key === 's' || e.key === 'S') {
+    e.preventDefault();
+    switchWallpaper();
     return;
   }
   handleActivity();
@@ -583,15 +607,15 @@ function handleKeydown(e) {
 
 function handleMouseMove(e) {
   if (settings.exitMode !== 'activity') return;
-  
+
   const dx = Math.abs(e.clientX - lastMousePos.x);
   const dy = Math.abs(e.clientY - lastMousePos.y);
-  
+
   if (dx > 50 || dy > 50) {
     exitScreensaver();
     return;
   }
-  
+
   lastMousePos = { x: e.clientX, y: e.clientY };
 }
 
@@ -601,6 +625,7 @@ async function init() {
   if (videoElement) {
     videoElement.addEventListener('contextmenu', (e) => e.preventDefault());
   }
+  applyHideCursorSetting();
   updateButtonVisibility();
 
   if (settings.wallpaperSource === 'folder') {

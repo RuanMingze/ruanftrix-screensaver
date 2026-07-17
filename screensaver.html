@@ -110,6 +110,12 @@
       height: 22px;
     }
 
+    /* 隐藏鼠标：通过给 body 加 .cursor-hidden 隐藏整个屏幕的鼠标指针 */
+    body.cursor-hidden,
+    body.cursor-hidden * {
+      cursor: none !important;
+    }
+
     #clock-container {
       position: absolute;
       color: white;

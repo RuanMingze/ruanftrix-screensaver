@@ -45,7 +45,9 @@ const defaultSettings = {
   showClock: true,
   showSeconds: false,
   showEffects: true,
+  showLoadingIndicator: true,
   exitMode: 'manual',
+  hideCursor: false,
   clockPosition: 'bottom-left',
   clockFont: 'Comic Sans MS'
 };

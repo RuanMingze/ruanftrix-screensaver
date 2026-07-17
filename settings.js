@@ -64,7 +64,9 @@ function loadSettings() {
       showClock: true,
       showSeconds: false,
       showEffects: true,
+      showLoadingIndicator: true,
       exitMode: 'manual',
+      hideCursor: false,
       clockPosition: 'bottom-left',
       clockFont: 'Comic Sans MS'
     };
@@ -146,6 +148,7 @@ function updateUI() {
   document.getElementById('showClock').classList.toggle('checked', currentSettings.showClock);
   document.getElementById('showSeconds').classList.toggle('checked', currentSettings.showSeconds);
   document.getElementById('showEffects').classList.toggle('checked', currentSettings.showEffects);
+  document.getElementById('showLoadingIndicator').classList.toggle('checked', currentSettings.showLoadingIndicator !== false);
   document.getElementById('enableVideoAudio').classList.toggle('checked', currentSettings.enableVideoAudio === true);
   updateVideoAudioVisibility(source);
 
@@ -159,6 +162,8 @@ function updateUI() {
   document.querySelectorAll('.toggle-option').forEach(option => {
     option.classList.toggle('active', option.dataset.exit === currentSettings.exitMode);
   });
+  updateHideCursorVisibility(currentSettings.exitMode);
+  document.getElementById('hideCursor').classList.toggle('checked', currentSettings.hideCursor === true);
 }
 
 function switchSourcePanel(source) {
@@ -214,6 +219,22 @@ function updateVideoAudioVisibility(source) {
   const isVideo = source === 'video' || source === 'videoUrl';
   if (container) container.style.display = isVideo ? 'flex' : 'none';
   if (hint) hint.style.display = isVideo ? 'block' : 'none';
+}
+
+// 控制"隐藏鼠标"开关的可见性：仅在"任意动作退出"模式下显示
+// 切回"仅手动关闭"时，自动取消勾选并保存，避免下次启动时残留隐藏鼠标状态
+function updateHideCursorVisibility(exitMode) {
+  const group = document.getElementById('hideCursorGroup');
+  if (!group) return;
+  const isActivity = exitMode === 'activity';
+  group.style.display = isActivity ? '' : 'none';
+  if (!isActivity) {
+    const hideCursor = document.getElementById('hideCursor');
+    if (hideCursor && hideCursor.classList.contains('checked')) {
+      hideCursor.classList.remove('checked');
+      onSettingsChanged();
+    }
+  }
 }
 
 function updateAutoSwitchGroupState() {
@@ -274,7 +295,9 @@ function getCurrentFormData() {
     showClock: document.getElementById('showClock').classList.contains('checked'),
     showSeconds: document.getElementById('showSeconds').classList.contains('checked'),
     showEffects: document.getElementById('showEffects').classList.contains('checked'),
+    showLoadingIndicator: document.getElementById('showLoadingIndicator').classList.contains('checked'),
     exitMode: document.querySelector('.toggle-option.active')?.dataset.exit || 'manual',
+    hideCursor: document.getElementById('hideCursor').classList.contains('checked'),
     clockPosition: document.getElementById('clockPosition').value,
     clockFont: document.getElementById('clockFont').value
   };
@@ -306,7 +329,9 @@ function resetToDefault() {
     showClock: true,
     showSeconds: false,
     showEffects: true,
+    showLoadingIndicator: true,
     exitMode: 'manual',
+    hideCursor: false,
     clockPosition: 'bottom-left',
     clockFont: 'Comic Sans MS'
   };
@@ -859,9 +884,21 @@ document.addEventListener('DOMContentLoaded', () => {
       document.querySelectorAll('.toggle-option').forEach(opt => opt.classList.remove('active'));
       option.classList.add('active');
       currentSettings.exitMode = option.dataset.exit;
+      updateHideCursorVisibility(currentSettings.exitMode);
       onSettingsChanged();
     });
   });
+
+  // 隐藏鼠标开关（仅在"任意动作退出"模式下可用）
+  const hideCursorContainer = document.getElementById('hideCursorContainer');
+  if (hideCursorContainer) {
+    hideCursorContainer.addEventListener('click', () => {
+      // 仅在 activity 模式下允许切换
+      if (currentSettings.exitMode !== 'activity') return;
+      document.getElementById('hideCursor').classList.toggle('checked');
+      onSettingsChanged();
+    });
+  }
   
   document.getElementById('showClockContainer').addEventListener('click', () => {
     document.getElementById('showClock').classList.toggle('checked');
@@ -875,6 +912,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
   document.getElementById('showEffectsContainer').addEventListener('click', () => {
     document.getElementById('showEffects').classList.toggle('checked');
+    onSettingsChanged();
+  });
+
+  document.getElementById('showLoadingIndicatorContainer').addEventListener('click', () => {
+    document.getElementById('showLoadingIndicator').classList.toggle('checked');
     onSettingsChanged();
   });
   
